@@ -2,13 +2,15 @@
 
 # https://ncss-tech.github.io/AQP/sharpshootR/CDEC.html
 
+
+# Libraries ---------------------------------------------------------------
+
 library(sharpshootR)
 library(sf)
 library(tidyverse)
 library(mapview)
 library(purrr)
 library(lubridate)
-
 
 # TO DO NOTES -------------------------------------------------------------
 
@@ -131,7 +133,7 @@ cdec_temps_day <- cdec_temps_day %>%
 save(cdec_temps_day, file = "data/cdec_temps_all_daily_filt8yr.rda")
 save(cdec_info, file="data/cdec_stations_metadata_dateranges_112_stations.rda")
 
-# PLOT --------------------------------------------------------------------
+# DAILY PLOTS ---------------------------------------------------------------
 
 # some prelim plots
 ggplot() + 
@@ -149,27 +151,75 @@ ggplot() +
 ggsave(filename = "output/figures/daily_cdec_temps_example.png", dpi=300,
        width = 11, height = 8, units = "in")
 
-# TESTING SINGLE GAGE METADATA -----------------------------------------------------
+# DOWNLOAD HOURLY DATA w PURRR ----------------------------------------------
 
-## GETTING METADATA
-# look at metadata for a single gage:
-tst_id <- "AFD"
-meta <- CDEC_StationInfo(tst_id)[["sensor.meta"]] %>% 
-  filter(sensor==25)
+load("data/cdec_temps_all_daily_filt8yr.rda")
+load("data/cdec_stations_metadata_dateranges_112_stations.rda")
 
-# get temp sensor = 25 and get date range/period of record
-meta <- meta %>% 
-  mutate(station_id=tst_id) %>% 
-  separate(period_of_record, sep = " ", into = "date_begin", remove = FALSE) %>% 
-  mutate(date_begin = gsub("/", replacement = "-", x = date_begin),
-         date_end = lubridate::ymd("2019-10-01"),
-         date_begin = lubridate::ymd(date_begin))
+# now filter to data where gages have >8 yrs of data (minimum req is 8.5)
+cdec_filt <- cdec_info %>% filter(yr_total > 8)
+
+# get list of stations we have data for:
+cdec_d_ids <- unique(cdec_temps_day$site_id)
+
+# first filter to only "Hourly" stations
+cdec_hourly <- cdec_filt %>% 
+  filter(interval_id=="H", !site_id %in% cdec_d_ids) %>% 
+  select(site_id, sensor, interval_id, date_begin, date_end)
+
+# use "pmap" function (parallel map) to loop through and get data
+cdec_temps_hr <- cdec_hourly %>% 
+  mutate(tempdata = pmap(cdec_hourly, ~CDECquery(id=..1, sensor=..2, interval=..3, start=..4, end=..5))) 
+
+# convert to dataframe (from list col)
+cdec_temps_hr <- cdec_temps_hr %>% unnest(cols=c(tempdata))
 
 
-# TESTING SINGLE GAGE GETTING DATA ------------------------------------------------------------
+# flag bad values:
+cdec_temps_hr <- cdec_temps_hr %>% 
+  mutate(flag=if_else(value<0 | value > 100, "Y", "N"))
 
-## GETTING LOGGER DATA
+# save out
 
-tempdata <- CDECquery(id=temp_sensor$station_id, sensor=25, interval='H', start=temp_sensor$date_begin, end=temp_sensor$date_end)
+# IT WORKED!! Save it immediately:
+save(cdec_temps_hr, file = "data/cdec_temps_all_hourly_filt8yr.rda")
 
-tempdata_e <- CDECquery(id=temp_sensor$station_id, sensor=25, interval='E', start=temp_sensor$date_begin, end=temp_sensor$date_end)
+# save out stations we have data from:
+cdec_h_ids <- unique(cdec_temps_hr$site_id)
+station_list <- tibble("site_id"=cdec_d_ids, "interval"="D")
+station_list2 <- tibble("site_id"=cdec_h_ids, "interval"="H")
+station_list <- bind_rows(station_list, station_list2)
+save(station_list, file="data/cdec_stations_completed.rda")
+
+# DOWNLOAD EVENT DATA w PURRR ----------------------------------------------
+
+load("data/cdec_stations_completed.rda")
+load("data/cdec_stations_metadata_dateranges_112_stations.rda")
+
+# now filter to data where gages have >8 yrs of data (minimum req is 8.5)
+cdec_filt <- cdec_info %>% filter(yr_total > 8)
+
+# first filter to only "Hourly" stations
+cdec_event <- cdec_filt %>% 
+  filter(interval_id=="E", !site_id %in% station_list$site_id) %>% 
+  select(site_id, sensor, interval_id, date_begin, date_end)
+
+# use "pmap" function (parallel map) to loop through and get data
+cdec_temps_min <- cdec_event %>% 
+  mutate(tempdata = pmap(cdec_event, ~CDECquery(id=..1, sensor=..2, interval=..3, start=..4, end=..5))) 
+
+# convert to dataframe (from list col)
+cdec_temps_min <- cdec_temps_min %>% unnest(cols=c(tempdata))
+
+# flag bad values:
+cdec_temps_min <- cdec_temps_min %>% 
+  mutate(flag=if_else(value<0 | value > 100, "Y", "N"))
+
+# IT WORKED!! Save it immediately:
+save(cdec_temps_min, file = "data/cdec_temps_all_event_filt8yr.rda")
+
+# save out stations we have data from:
+cdec_e_ids <- unique(cdec_temps_min$site_id)
+station_list3 <- tibble("site_id"=cdec_e_ids, "interval"="E")
+station_list <- bind_rows(station_list, station_list3)
+save(station_list, file="data/cdec_stations_completed.rda")
