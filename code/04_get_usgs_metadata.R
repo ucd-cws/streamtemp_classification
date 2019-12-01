@@ -115,3 +115,19 @@ usgs_temps_iv <- usgs_temps_iv %>% dataRetrieval::addWaterYear()
 
 # save out
 save(usgs_temps_iv, file = "data/usgs_temps_all_iv_filt8yr.rda")
+
+# save out stations we have data from:
+usgs_dv_ids <- unique(usgs_temps_day$site_no)
+station_list <- tibble("site_id"=usgs_dv_ids, "interval"="D")
+usgs_iv_ids <- unique(usgs_temps_iv$site_no)
+station_list2 <- tibble("site_id"=usgs_iv_ids, "interval"="E")
+station_list_usgs <- bind_rows(station_list, station_list2)
+save(station_list_usgs, file="data/usgs_stations_completed.rda")
+
+# bind metadata
+usgs_metadata <- bind_rows(usgs_daily, usgs_event)
+save(usgs_metadata, file="data/usgs_stations_metadata_dateranges_all.rda")
+
+# filter and resave (only 31 stations have more than 8 years of data)
+usgs_metadata_filt8 <- usgs_metadata %>% filter(yr_total>8)
+save(usgs_metadata_filt8, file="data/usgs_stations_metadata_dateranges_filt8.rda")
