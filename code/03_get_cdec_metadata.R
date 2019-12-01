@@ -1,9 +1,11 @@
-# Query for CDEC info using sharpshootr
+## SUMMARY: Download CDEC data for selected gages and save out
+## 2019-Dec
+## DETAILS: 
+# Download data from selected CDEC gages using sharpshootr
 
 # https://ncss-tech.github.io/AQP/sharpshootR/CDEC.html
 
-
-# Libraries ---------------------------------------------------------------
+# LIBRARIES ---------------------------------------------------------------
 
 library(sharpshootR)
 library(sf)
