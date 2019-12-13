@@ -11,28 +11,35 @@ library(mapview)
 library(purrr)
 library(lubridate)
 
-# LOAD CDEC DATA -----------------------------------------------------------
+# LOAD DATA -----------------------------------------------------------
+
+# load data
+load("data/all_gages.rda")
+all_gages %>% st_drop_geometry() -> all_gages
 
 # cdec data
 load("data/cdec_stations_completed.rda") # station list
-cdec_stations <- station_list
+cdec_stations <- station_list; rm(station_list)
 load("data/cdec_stations_metadata_dateranges_112_stations.rda")
 load("data/cdec_temps_all_daily_filt8yr.rda")
 load("data/cdec_temps_all_hourly_filt8yr.rda")
 load("data/cdec_temps_all_event_filt8yr.rda")
 
-# how many total rows of data?
+# usgs data
+load("data/usgs_stations_completed.rda")
+usgs_stations <- station_list_usgs
+load("data/usgs_stations_metadata_dateranges_filt8.rda")
+load("data/usgs_temps_all_daily_filt8yr.rda")
+load("data/usgs_temps_all_iv_filt8yr.rda")
+
+nrow(usgs_temps_day) + nrow(usgs_temps_iv)
+# 2.2 million rows of usgs data
 nrow(cdec_temps_day) + nrow(cdec_temps_hr) + nrow(cdec_temps_min) 
 # 11.5 million rows of CDEC data
+
 # 13.7 million rows of data total!
 
-# CLEAN UP CDEC DATA -------------------------------------------------------
-
-# look at cdec metadata and filter to >8 yrs only
-cdec_info <- cdec_info %>% 
-  filter(yr_total>8)
-glimpse(cdec_info)
-
+# load function for converting C to F and F to C
 # conversion F to C function
 # convert temperatures C-F and F-C
 convertTemp <- function (x, unit = c("K", "C", "F"), convert=c("K","C","F")){
@@ -51,15 +58,55 @@ convertTemp <- function (x, unit = c("K", "C", "F"), convert=c("K","C","F")){
   df
 }
 
-# add C to values
+# DOUBLE CHECK WITH MAP ------------------------------------------------------
+
+# look at cdec metadata and filter to >8 yrs only
+cdec_metadata_filt8 <- cdec_info %>% 
+  filter(yr_total>8) %>% left_join(., all_gages[,c("site_id","site_name","lat","lon","HR_CODE","HR_NAME")], by=c("site_id")) %>% 
+  st_as_sf(coords=c("lon","lat"), remove=FALSE, crs=4326)
+glimpse(cdec_metadata_filt8)
+length(unique(cdec_metadata_filt8$site_id)) # 65 total stations
+
+# look at usgs metadata
+usgs_metadata_filt8 %>% glimpse()
+usgs_metadata_filt8 <- usgs_metadata_filt8 %>% 
+  st_as_sf(coords=c("dec_long_va","dec_lat_va"), remove=FALSE, crs=4326)
+
+# read in hydroregions:
+dwr <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% st_transform(4326)
+
+mapview(dwr, color="blue", col.regions=NA) + mapview(cdec_metadata_filt8, col.regions="orange") + mapview(usgs_metadata_filt8, col.regions="maroon")
+
+# CLEAN UP DAILY CDEC DATA -------------------------------------------------------
+
+# DAILY: add C to values and select cols
 cdec_temps_day <- cdec_temps_day %>% 
+  filter(flag=="N") %>% 
   mutate(value_mean_C = convertTemp(value, unit = "F", convert = "C"),
          month_day = mday(datetime),
          datetime = as.Date(datetime)) %>% 
   rename(value_mean = value) %>% 
   select(station_id:sensor_type, year, month, water_year, water_day, month_day, value_mean, datetime, value_mean_C)
 
-# make hourly data into daily means
+# plot by facet
+plotly::ggplotly(
+  ggplot() +
+    geom_point(data=cdec_temps_day,
+               aes(x=datetime, y=value_mean_C, color=station_id), size=2.5, alpha=.7,show.legend = F)+
+    ylim(c(0,40)) +
+    #facet_grid(station_id~.) +
+    scale_color_viridis_d()+
+    labs(y="Temp (C)", x="") +
+    theme_bw()+
+    #ggdark::dark_theme_classic() +
+    theme(axis.text.x = element_text(angle=90, hjust = 1))
+)
+
+
+# CLEAN UP HOURLY CDEC DATA -----------------------------------------------
+
+
+# HOURLY: make hourly data into daily means
 cdec_temps_day2 <- cdec_temps_hr %>% 
   # filter out bad data
   filter(flag=="N") %>% 
@@ -71,14 +118,18 @@ cdec_temps_day2 <- cdec_temps_hr %>%
          value_mean_C = convertTemp(value_mean, unit = "F", convert = "C"))
 
 # plot
-ggplot() +
-  geom_line(data=cdec_temps_day2,
-            aes(x=datetime, y=value_mean_C, color=station_id), show.legend = F)+
+plotly::ggplotly(
+  ggplot() +
+  geom_point(data=cdec_temps_day2 %>% filter(station_id=="YRS"),
+            aes(x=datetime, y=value_mean_C, color=station_id), show.legend = T)+
   #ylim(c(0,90)) +
   scale_color_viridis_d()+
-  labs(y="Temp (F)", x="") +
-  ggdark::dark_theme_classic() +
-  theme(axis.text.x = element_text(angle=90, hjust = 1))
+  labs(y="Temp (C)", x="") +
+  #ggdark::dark_theme_classic() +
+  theme(axis.text.x = element_text(angle=90, hjust = 1)))
+
+
+# CLEAN UP EVENT CDEC DATA ------------------------------------------------
 
 # make event into daily:
 cdec_temps_day3 <- cdec_temps_min %>% 
@@ -144,19 +195,6 @@ map(src_tbls(dbcon), ~dim(dbReadTable(dbcon$con, .))) %>%
 # to get a table back or "collect it":
 cdec_metadata_filt8 <- tbl(dbcon, "cdec_metadata_filt8") %>% collect()
 
-
-
-# LOAD USGS DATA ----------------------------------------------------------
-
-# usgs data
-load("data/usgs_stations_completed.rda")
-usgs_stations <- station_list_usgs
-load("data/usgs_stations_metadata_dateranges_filt8.rda")
-load("data/usgs_temps_all_daily_filt8yr.rda")
-load("data/usgs_temps_all_iv_filt8yr.rda")
-
-nrow(usgs_temps_day) + nrow(usgs_temps_iv)
-# 2.1 million rows of data
 
 # CLEAN UP USGS DATA ------------------------------------------------------
 
