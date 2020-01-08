@@ -89,7 +89,7 @@ ggplotly(
   ggplot() +geom_point(data = cdec_daily_CRS_QA, aes(x=datetime, y=value)))
 
 #save QA'd dataset as a .rds file
-write_rds(cdec_daily_CRS_QA, path = "data/data_review/cdec_daily_CRS_QA.rds")
+write_rds(cdec_daily_CRS_QA, path = "data/QA_data/cdec_daily_CRS_QA.rds")
 
 #update the gage_QA_progress
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
