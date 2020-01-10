@@ -27,6 +27,23 @@ load("data/usgs_temps_all_daily_filt8yr.rda")
 load("data/usgs_temps_all_iv_filt8yr.rda")
 
 
+# Get list of sites -------------------------------------------------------
+
+usgs_temps_day %>% distinct(site_no) %>% tally() # 25
+usgs_temps_iv %>% distinct(site_no) %>% tally() # 6
+
+usgs_temps_iv %>% distinct(site_no) %>% 
+  anti_join(., usgs_temps_day,  by="site_no") # should be 6
+
+
+cdec_temps_day %>% distinct(site_id) %>% tally() # 7
+cdec_temps_hr %>% distinct(site_id) %>% tally() # 39
+cdec_temps_min %>% distinct(site_id) %>% tally() # 18
+
+all_gages %>% st_drop_geometry %>% filter(data_source=="USGS") %>% 
+  anti_join(., usgs_temps_day, by=c("site_id"="site_no")) %>% 
+  as.data.frame()
+
 # Split out Data and Write OUT -----------------------------------------
 
 # originally wrote to CSV but file sizes are VERY large so opted for .rds (RDATA) files since they are more compressed.
