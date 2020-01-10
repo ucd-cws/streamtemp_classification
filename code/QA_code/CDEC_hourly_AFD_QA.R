@@ -101,25 +101,90 @@ ggplotly(
 
 cdec_hourly_AFD_QA <- rbind(cdec_hourly_AFD_QA,cdec_hourly_AFD_70001_90000)
 
-#start QA process from here.
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD[90001:110000,], aes(x=datetime, y=value)))
 
+cdec_hourly_AFD_90001_110000 <- cdec_hourly_AFD[90001:110000,]
+
+cdec_hourly_AFD_90001_110000 <- cdec_hourly_AFD_90001_110000[-c(3249:3256),]
+
+cdec_hourly_AFD_90001_110000 <- cdec_hourly_AFD_90001_110000[-c(17207:17209),]
+
+cdec_hourly_AFD_90001_110000 <- cdec_hourly_AFD_90001_110000[-c(17391:17396),]
+
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD_90001_110000, aes(x=datetime, y=value)))
+
+cdec_hourly_AFD_QA <- rbind(cdec_hourly_AFD_QA, cdec_hourly_AFD_90001_110000)
+
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD[110001:130000,], aes(x=datetime, y=value)))
+
+cdec_hourly_AFD_QA <- rbind(cdec_hourly_AFD_QA, cdec_hourly_AFD[110001:130000,])
+
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD[130001:150000,], aes(x=datetime, y=value)))
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD[130001:150000,] %>% 
+  filter(value < 100)
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18179:18180),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18201:18205),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18220:18223),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000 %>% 
+  filter(value < 68.5)
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(10006:10008),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(10352:10360),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(10364:10375),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(10376:10386),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(10862:10867),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18245:18249),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18282:18287),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18343:18349),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18395:18397),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18356:18361),]
+
+cdec_hourly_AFD_130001_150000 <- cdec_hourly_AFD_130001_150000[-c(18371:18375),]
+
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD_130001_150000, aes(x=datetime, y=value)))
+
+cdec_hourly_AFD_QA <- rbind(cdec_hourly_AFD_QA, cdec_hourly_AFD_130001_150000)
+
+ggplotly(
+  ggplot() + geom_point(data=cdec_hourly_AFD[150001:170000,], aes(x=datetime, y=value)))
+
+cdec_hourly_AFD_QA <- rbind(cdec_hourly_AFD_QA, cdec_hourly_AFD[150001:170000,])
 # Final review ------------------------------------------------------------
 
 #plot QA'd dataset to confirm all points look good
 ggplotly(
-  ggplot() +geom_point(data = cdec_daily_AFD_QA, aes(x=datetime, y=value)))
+  ggplot() +geom_point(data = cdec_hourly_AFD_QA, aes(x=datetime, y=value)))
 
 #save QA'd dataset as a .rds file
-write_rds(cdec_daily_AFD_QA, path = "data/QA_data/cdec_daily_AFD_QA.rds", compress = "gz")
+write_rds(cdec_hourly_AFD_QA, path = "data/QA_data/cdec_hourly_AFD_QA.rds", compress = "gz")
 
 #update the gage_QA_progress
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
 #confirm correct row to update by the site_id
-gage_QA_progress[103,1]
+gage_QA_progress[1,1]
 
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[103,4:6] <- c("ADW", "Y", "QA complete")
+gage_QA_progress[1,4:6] <- c("ADW", "Y", "QA complete")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")
