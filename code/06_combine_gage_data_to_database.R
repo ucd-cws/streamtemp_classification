@@ -92,7 +92,7 @@ cdec_temps_day <- cdec_temps_day %>%
   rename(value_mean = value) %>% 
   select(station_id:sensor_type, year, month, water_year, water_day, month_day, value_mean, datetime, value_mean_C)
 
-# plot by facet
+# plot all stations daily
 ggplot() +
   geom_point(data=cdec_temps_day,
              aes(x=datetime, y=value_mean_C, color=station_id), size=1.5, alpha=.7,show.legend = F)+
@@ -120,11 +120,10 @@ cdec_temps_day2 <- cdec_temps_hr %>%
 # how many unique stations (n=39)
 cdec_temps_day2 %>% distinct(station_id) %>% tally()
 
-# plot all/single station
+# plot all/single station (this takes a minute to plot, lots of data)
 ggplot() +
   geom_point(data=cdec_temps_day2, #%>% filter(station_id=="YRS"),
-             aes(x=datetime, y=value_mean_C, color=station_id), show.legend = T)+
-  #ylim(c(0,90)) +
+             aes(x=datetime, y=value_mean_C, color=station_id), show.legend = F)+
   scale_color_viridis_d()+
   labs(y="Temp (C)", x="") +
   #ggdark::dark_theme_classic() +
@@ -167,7 +166,7 @@ cdec_temps_day3_TTC <- cdec_temps_day3 %>%
   mutate(value_mean_C = value_mean) %>% 
   mutate(value_mean = convertTemp(value_mean_C, unit = "C", convert = "F"))
 
-# replot
+# replot just TTC
 ggplot() +
     geom_line(data=cdec_temps_day3_TTC,
               aes(x=datetime, y=value_mean, color=station_id), show.legend = F)+
@@ -225,10 +224,10 @@ dbcon <- src_sqlite(dbpath, create = FALSE) # set create to TRUE
 
 src_tbls(dbcon) # see tables in DB
 
-# ADD A TABLES (can overwrite with append=TRUE or overwrite=T)
+# ADD TABLES (can overwrite with append=TRUE or overwrite=T)
 copy_to(dbcon, cdec_daily, temporary=FALSE, overwrite=TRUE, indexes=list(c("station_id", "year")))
 
-copy_to(dbcon, df = cdec_info, name = "cdec_metadata_filt8", temporary = FALSE, indexes=list(c("site_id")))
+copy_to(dbcon, st_drop_geometry(cdec_metadata_filt8), name = "cdec_metadata_filt8", temporary = FALSE,  overwrite=TRUE, indexes=list(c("site_id")))
 
 # to check tables now exists
 src_tbls(dbcon) # see tables in DB
@@ -258,7 +257,7 @@ usgs_temps_day1 <- usgs_temps_day %>%
          date = as.Date(date),
          month = month(date),
          year = year(date)) %>% 
-  rename(value_mean = Wtemp) %>%
+  rename(value_mean_C = Wtemp) %>%
   select(-c(agency_cd, Wtemp_cd))
   
 # make event/hourly data into daily means
@@ -286,14 +285,15 @@ usgs_temps_day2 %>% distinct(station_id) %>% tally() # (n=6)
 # plot dailies
 ggplot() +
   geom_line(data=usgs_temps_day1,
-            aes(x=date, y=value_mean, color=station_id), show.legend = F)+
-  scale_color_viridis_d() + labs(y="Temp (C)", x="") +
+            aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
+  scale_color_viridis_d() + labs(y="Temp (C)", x="") + theme_bw()+
   theme(axis.text.x = element_text(angle=90, hjust = 1))
 
+# plot new dailies (averaged from instaneous values)
 ggplot() +
   geom_line(data=usgs_temps_day2,
             aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
-  scale_color_viridis_d() + labs(y="Temp (C)", x="") +
+  scale_color_viridis_d() + labs(y="Temp (C)", x="") + theme_bw()+
   theme(axis.text.x = element_text(angle=90, hjust = 1))
 
 # BIND USGS DATA ----------------------------------------------------------
@@ -307,6 +307,14 @@ usgs_daily %>% distinct(station_id) %>% tally # should be total of above 2 lines
 
 # check how many stations avail per year
 usgs_daily %>% group_by(year) %>% distinct(station_id) %>% tally() %>% as.data.frame()
+
+# plot all
+ggplot() +
+  geom_line(data=usgs_daily,
+            aes(x=date, y=value_mean_C, color=station_id), 
+            show.legend = F)+
+  scale_color_viridis_d() + labs(y="Temp (C)", x="") +
+  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust = 1))
 
 # SAVE USGS TO DATABASE ---------------------------------------------------
 
@@ -326,7 +334,7 @@ src_tbls(dbcon) # see tables in DB
 # ADD A TABLES (can overwrite with append=TRUE or overwrite=T)
 copy_to(dbcon, usgs_daily, temporary=FALSE, overwrite=TRUE, indexes=list(c("station_id", "year")))
 
-copy_to(dbcon, usgs_metadata_filt8, name = "usgs_metadata_filt8", temporary=FALSE, overwrite=TRUE)
+copy_to(dbcon, st_drop_geometry(usgs_metadata_filt8), name = "usgs_metadata_filt8", temporary=FALSE, overwrite=TRUE)
 
 # to check tables now exists
 src_tbls(dbcon) # see tables in DB
@@ -342,3 +350,10 @@ map(src_tbls(dbcon), ~dim(dbReadTable(dbcon$con, .))) %>%
 
 # to get a table back or "collect it":
 #cdec_metadata_filt8 <- tbl(dbcon, "cdec_metadata_filt8") %>% collect()
+
+
+# Write final selected/filtered metadata out as csv -----------------------
+
+write_csv(st_drop_geometry(cdec_metadata_filt8), path = "data/cdec_stations_metadata_filt8yr.csv")
+
+write_csv(st_drop_geometry(usgs_metadata_filt8), path = "data/usgs_stations_metadata_filt8yr.csv")
