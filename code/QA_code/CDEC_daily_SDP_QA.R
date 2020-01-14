@@ -68,11 +68,8 @@ write_rds(cdec_daily_SDP_QA, path = "data/QA_data/cdec_daily_SDP_QA.rds")
 #update the gage_QA_progress
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
-#confirm correct row to update by the site_id
-gage_QA_progress[90,1]
-
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[90,4:6] <- c("ADW", "Y", "QA complete")
+gage_QA_progress[gage_QA_progress$site_id=="SDP",4:6] <- c("ADW", "Y", "QA complete")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")

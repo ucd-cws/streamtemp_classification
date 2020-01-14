@@ -40,11 +40,8 @@ ggplotly(
 #update the gage_QA_progress
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
-#confirm correct row to update by the site_id
-gage_QA_progress[190,1]
-
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[190,4:6] <- c("ADW", "Y", "Data gap too large, not enough data for analysis. Gage dropped from study")
+gage_QA_progress[gage_QA_progress$site_id=="11446220",4:6] <- c("ADW", "Y", "Data gap too large, not enough data for analysis. Gage dropped from study")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")

@@ -82,11 +82,8 @@ write_rds(cdec_hourly_BBQ_QA, path = "data/QA_data/cdec_hourly_BBQ_QA.rds", comp
 #update the gage_QA_progress
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
-#confirm correct row to update by the site_id
-gage_QA_progress[3,1]
-
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[3,4:6] <- c("ADW", "N", "too many air temp days in dataset, need to convert to daily mean first")
+gage_QA_progress[gage_QA_progress$site_id=="BBQ",4:6] <- c("ADW", "N", "too many air temp days in dataset, need to convert to daily mean first")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")
