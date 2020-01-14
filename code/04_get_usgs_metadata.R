@@ -12,6 +12,7 @@ library(tidyverse)
 library(mapview)
 library(purrr)
 library(lubridate)
+library(tidylog)
 
 
 # GET SITES ---------------------------------------------------------------
@@ -35,9 +36,9 @@ usgs <- all_gages %>% filter(data_source=="USGS") %>%
 # GET METADATA ------------------------------------------------------------
 
 # temps: parameterCd = "00010", dailymean = statCd "00003"
-
+# https://nwis.waterdata.usgs.gov/usa/nwis/pmcodes/help?codes_help
 # check what daily data is available:
-(usgs_daily <- whatNWISdata(siteNumber=usgs$site_id, service='dv', parameterCd = '00010', statCd="00003") %>% 
+(usgs_daily <- whatNWISdata(siteNumber=usgs$site_id, service='dv', parameterCd = '00010', statCd='00003') %>% 
   select(site_no, station_nm, dec_lat_va, dec_long_va, huc_cd, 
          data_type_cd, begin_date:count_nu) %>% 
    rename(interval=data_type_cd, huc8=huc_cd, site_id=site_no,
@@ -95,9 +96,10 @@ ggsave(filename = "output/figures/usgs_gages_data_range_w_8yearsplus_interval.pd
 
 # first filter to only "Daily" stations w > 8yrs data
 usgs_filt <- usgs_daily %>% filter(yr_total > 8)
+usgs_filt_iv <- usgs_event %>% filter(yr_total > 8)
 
 # Get daily
-usgs_temps_day <- dataRetrieval::readNWISdv(siteNumbers=usgs_filt$site_id,parameterCd = "00010") 
+usgs_temps_day <- dataRetrieval::readNWISdv(siteNumbers=usgs_filt$site_id, parameterCd = "00010") 
 
 usgs_temps_day <- usgs_temps_day %>% dataRetrieval::addWaterYear()
 
