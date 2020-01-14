@@ -1,4 +1,4 @@
-# 05_split out data
+# 06_split out data
 
 library(sf)
 library(tidyverse)
@@ -17,13 +17,12 @@ load("data/cdec_temps_merged_daily_filt8yr.rda")
 
 # usgs data
 usgs_metadata_filt8 <- read_csv("data/usgs_stations_metadata_filt8yr.csv")
-#load("data/usgs_stations_metadata_dateranges_filt8.rda")
 load("data/usgs_temps_merged_daily_filt8yr.rda")
 
 # Check Number of Sites ---------------------------------------------------
 
-usgs_daily %>% distinct(station_id) %>% tally() # 31
-cdec_daily %>% distinct(station_id) %>% tally() # 64
+usgs_daily %>% distinct(station_id) %>% tally() # 22
+cdec_daily %>% distinct(station_id) %>% tally() # 63
 
 # Split out Data and Write OUT -----------------------------------------
 
@@ -45,4 +44,4 @@ usgs_daily %>%
   walk2(names(.), ~write_rds(.x, path = paste0("data/data_review/usgs_daily_",.y, '.rds'))) # write to RData file (.rds) 
 
 # check number of files matches number of total gages?
-length(list.files("data/data_review")) ## should match cdec_stations == 64 + usgs_metadata_filt8 == 31 (n=95)
+length(list.files("data/data_review", pattern = ".rds")) ## should match cdec_stations == 63 + usgs_metadata_filt8 == 22 (n=95)
