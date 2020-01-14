@@ -11,6 +11,7 @@ library(mapview)
 library(purrr)
 library(lubridate)
 library(tidylog)
+library(weathermetrics)
 
 # LOAD DATA -----------------------------------------------------------
 
@@ -40,28 +41,6 @@ nrow(cdec_temps_day) + nrow(cdec_temps_hr) + nrow(cdec_temps_min)
 
 # 13.7 million rows of data total!
 
-
-# Load Functions ----------------------------------------------------------
-
-# load function for converting C to F and F to C
-# conversion F to C function
-# convert temperatures C-F and F-C
-convertTemp <- function (x, unit = c("K", "C", "F"), convert=c("K","C","F")){
-  if (!is.numeric(x))
-    stop("x must be numeric")
-  unit <- match.arg(unit)
-  const <- c(K = 0, C = -273.15, F = -459.67)
-  a <- c(K = 1, C = 1, F = 5/9)
-  units <- names(const)
-  u <- match(unit, units)
-  TK <- (x - const[u]) * a[u]
-  convert <- convert
-  ret <- data.frame(K = TK, C = TK - 273.15, F = TK * 1.8 - 459.67)
-  row.names(ret) <- NULL
-  df<-ret[,which(names(ret) %in% convert)]
-  df
-}
-
 # DOUBLE CHECK WITH MAP ------------------------------------------------------
 
 # look at cdec metadata and filter to >8 yrs only
@@ -78,7 +57,7 @@ usgs_metadata_filt8 <- usgs_metadata_filt8 %>%
 
 # read in hydroregions:
 dwr <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% st_transform(4326)
-# 
+ 
 # mapview(dwr, color="blue", col.regions=NA) + mapview(cdec_metadata_filt8, col.regions="orange") + mapview(usgs_metadata_filt8, col.regions="maroon")
 
 # CLEAN UP DAILY CDEC DATA -------------------------------------------------------
@@ -86,16 +65,16 @@ dwr <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% st_transform(4326)
 # DAILY: add C to values and select cols
 cdec_temps_day <- cdec_temps_day %>% 
   filter(flag=="N") %>% 
-  mutate(value_mean_C = convertTemp(value, unit = "F", convert = "C"),
+  mutate(value_mean_C = convert_temperature(value, old_metric = "f", new_metric = "c"),
          month_day = mday(datetime),
-         datetime = as.Date(datetime)) %>% 
-  rename(value_mean = value) %>% 
-  select(station_id:sensor_type, year, month, water_year, water_day, month_day, value_mean, datetime, value_mean_C)
+         date = as.Date(datetime)) %>% 
+  rename(value_mean_F = value) %>% 
+  select(station_id:sensor_type, year, month, water_year, water_day, month_day, value_mean_F, date, value_mean_C)
 
 # plot all stations daily
 ggplot() +
   geom_point(data=cdec_temps_day,
-             aes(x=datetime, y=value_mean_C, color=station_id), size=1.5, alpha=.7,show.legend = F)+
+             aes(x=date, y=value_mean_C, color=station_id), size=1.5, alpha=.7,show.legend = F)+
   ylim(c(0,40)) +
   #facet_grid(station_id~.) +
   scale_color_viridis_d()+
@@ -112,10 +91,10 @@ cdec_temps_day2 <- cdec_temps_hr %>%
   filter(flag=="N") %>% 
   mutate(month_day = mday(datetime)) %>% 
   group_by(station_id, dur_code, sensor_num, sensor_type, year, month, water_year, water_day, month_day) %>% 
-  summarize(value_mean = mean(value, na.rm=T)) %>% as.data.frame() %>%
-  #add a datetime col back in
-  mutate(datetime = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
-         value_mean_C = convertTemp(value_mean, unit = "F", convert = "C"))
+  summarize(value_mean_F = mean(value, na.rm=T)) %>% as.data.frame() %>%
+  #add a date col back in
+  mutate(date = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
+         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"))
 
 # how many unique stations (n=39)
 cdec_temps_day2 %>% distinct(station_id) %>% tally()
@@ -123,12 +102,12 @@ cdec_temps_day2 %>% distinct(station_id) %>% tally()
 # plot all/single station (this takes a minute to plot, lots of data)
 ggplot() +
   geom_point(data=cdec_temps_day2, #%>% filter(station_id=="YRS"),
-             aes(x=datetime, y=value_mean_C, color=station_id), show.legend = F)+
+             aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
   scale_color_viridis_d()+
   labs(y="Temp (C)", x="") +
+  theme_bw()+
   #ggdark::dark_theme_classic() +
   theme(axis.text.x = element_text(angle=90, hjust = 1))
-
 
 # CLEAN UP EVENT CDEC DATA ------------------------------------------------
 
@@ -138,24 +117,24 @@ cdec_temps_day3 <- cdec_temps_min %>%
   filter(flag=="N") %>% 
   mutate(month_day = mday(datetime)) %>% 
   group_by(station_id, dur_code, sensor_num, sensor_type, year, month, water_year, water_day, month_day) %>% 
-  summarize(value_mean = mean(value, na.rm=T)) %>% as.data.frame() %>% 
-  mutate(datetime = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
-         value_mean_C = convertTemp(value_mean, unit = "F", convert = "C"))
+  summarize(value_mean_F = mean(value, na.rm=T)) %>% as.data.frame() %>% 
+  mutate(date = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
+         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"))
 
 # how many unique stations (n=18)
 cdec_temps_day3 %>% distinct(station_id) %>% tally()
 
 # plot
-plotly::ggplotly(
+#plotly::ggplotly(
 ggplot() +
   geom_line(data=cdec_temps_day3,
-            aes(x=datetime, y=value_mean, color=station_id), show.legend = F)+
+            aes(x=date, y=value_mean_F, color=station_id), show.legend = F)+
   scale_x_date(date_breaks = "2 years", date_labels = "%Y")+
   scale_color_viridis_d()+
   labs(y="Temp (F)", x="") +
   ggdark::dark_theme_classic() +
-  theme(axis.text.x = element_text(angle=90, hjust = 1)))
-
+  theme(axis.text.x = element_text(angle=90, hjust = 1))
+#)
 
 # looks like one station is in C already
 
@@ -163,13 +142,13 @@ ggplot() +
 cdec_temps_day3_TTC <- cdec_temps_day3 %>% 
   # filter out bad data
   filter(station_id=="TTC") %>% 
-  mutate(value_mean_C = value_mean) %>% 
-  mutate(value_mean = convertTemp(value_mean_C, unit = "C", convert = "F"))
+  mutate(value_mean_C = value_mean_F) %>% 
+  mutate(value_mean_F = convert_temperature(value_mean_F, old_metric = "c", new_metric = "f"))
 
 # replot just TTC
 ggplot() +
     geom_line(data=cdec_temps_day3_TTC,
-              aes(x=datetime, y=value_mean, color=station_id), show.legend = F)+
+              aes(x=date, y=value_mean_F, color=station_id), show.legend = F)+
     scale_x_date(date_breaks = "2 years", date_labels = "%Y")+
     scale_color_viridis_d()+ labs(x="") + theme_bw() +
     theme(axis.text.x = element_text(angle=90, hjust = 1))
@@ -183,7 +162,7 @@ cdec_temps_day3_rev <- cdec_temps_day3 %>%
 # plot again
 ggplot() +
   geom_line(data=cdec_temps_day3_rev,
-            aes(x=datetime, y=value_mean_C, color=station_id), show.legend = F)+
+            aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
   scale_x_date(date_breaks = "2 years", date_labels = "%Y")+
   scale_color_viridis_d()+
   labs(y="Temp (C)", x="") +
@@ -208,11 +187,24 @@ cdec_daily %>% group_by(year) %>% distinct(station_id) %>% tally() %>% as.data.f
 cdec_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% as.data.frame()
 # note, one station w/ less than 9 years, probably due to flagged data that was dropped
 
+# make list of stations with less than 9 years of data
+(cdec_less_than_9 <- cdec_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% filter(n<9))
+
+# drop those stations
+cdec_daily <- cdec_daily %>% filter(!station_id %in% c(cdec_less_than_9$station_id))
+
+# check stations and years again
+cdec_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% as.data.frame()
+
+# UPDATE CDEC METADATA ----------------------------------------------------
+
+# update metadata (but this includes hourly/event/daily gage options
+cdec_metadata_filt8 <- cdec_metadata_filt8 %>% filter(site_id %in% cdec_daily$station_id)
+
 # SAVE ALL CDEC DAILY -----------------------------------------------------
 
 # save as rda file...no additional compression needed
 save(cdec_daily, file = "data/cdec_temps_merged_daily_filt8yr.rda")
-
 
 # SAVE CDEC TO DATABASE ---------------------------------------------------
 
@@ -274,7 +266,7 @@ usgs_temps_day2 <- usgs_temps_day2 %>%
   group_by(station_id, year, month, water_year, month_day) %>% 
   summarize(value_mean_C = mean(Wtemp_Inst, na.rm=T)) %>% 
   as.data.frame() %>%
-  #add a datetime col back in
+  #add a date col back in
   mutate(date = mdy(paste0(as.integer(month), 
                                "-", month_day,"-", year)))
 
@@ -296,6 +288,15 @@ ggplot() +
   scale_color_viridis_d() + labs(y="Temp (C)", x="") + theme_bw()+
   theme(axis.text.x = element_text(angle=90, hjust = 1))
 
+#all together
+ggplot() +
+  geom_line(data=usgs_temps_day2,
+            aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
+  geom_line(data=usgs_temps_day1,
+            aes(x=date, y=value_mean_C, color=station_id), show.legend = F)+
+  scale_color_viridis_d() + labs(y="Temp (C)", x="") + theme_bw()+
+  theme(axis.text.x = element_text(angle=90, hjust = 1))
+
 # BIND USGS DATA ----------------------------------------------------------
 
 usgs_daily <- bind_rows(usgs_temps_day1, usgs_temps_day2) # yay!
@@ -308,13 +309,22 @@ usgs_daily %>% distinct(station_id) %>% tally # should be total of above 2 lines
 # check how many stations avail per year
 usgs_daily %>% group_by(year) %>% distinct(station_id) %>% tally() %>% as.data.frame()
 
-# plot all
-ggplot() +
-  geom_line(data=usgs_daily,
-            aes(x=date, y=value_mean_C, color=station_id), 
-            show.legend = F)+
-  scale_color_viridis_d() + labs(y="Temp (C)", x="") +
-  theme_bw() + theme(axis.text.x = element_text(angle=90, hjust = 1))
+# drop stations with less than 9 years of data
+usgs_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% as.data.frame()
+
+# make list of stations with less than 10 years of data
+(usgs_less_than_9 <- usgs_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% filter(n<9))
+
+# drop those stations
+usgs_daily <- usgs_daily %>% filter(!station_id %in% c(usgs_less_than_9$station_id))
+
+# check
+usgs_daily %>% group_by(station_id) %>% distinct(year) %>% tally() %>% arrange(n) %>% as.data.frame()
+
+# UPDATE USGS METADATA ----------------------------------------------------
+
+# update metadata and drop gages with too few years
+usgs_metadata_filt8 <- usgs_metadata_filt8 %>% filter(site_id %in% usgs_daily$station_id)
 
 # SAVE USGS TO DATABASE ---------------------------------------------------
 
@@ -340,16 +350,8 @@ copy_to(dbcon, st_drop_geometry(usgs_metadata_filt8), name = "usgs_metadata_filt
 src_tbls(dbcon) # see tables in DB
 
 # check size of tables
-library(purrr)
-library(RSQLite)
 map(src_tbls(dbcon), ~dim(dbReadTable(dbcon$con, .))) %>% 
   set_names(., src_tbls(dbcon))
-
-# gives the dimensions of each table in database
-# sqlite_stat1 and sqlite_stat4 are part of the database ref system, can ignore
-
-# to get a table back or "collect it":
-#cdec_metadata_filt8 <- tbl(dbcon, "cdec_metadata_filt8") %>% collect()
 
 
 # Write final selected/filtered metadata out as csv -----------------------
