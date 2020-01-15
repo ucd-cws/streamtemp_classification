@@ -2,7 +2,7 @@ site_id,site_name,operator,reviewer,completed(Y/N),notes
 AFD,AMERICAN R BELOW FOLSOM DAM,US Geological Survey,ADW,Y,QA complete
 AND,SACRAMENTO RIVER AT ANDERSON,CA Dept of Water Resources/North Region Office,NA,NA,NA
 BAS,SOUTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,N,"too many air temp days in dataset, need to convert to daily mean first"
-BBQ,STONEY CK BLW BLACK BUTTE DAM,US Army Corps of Engineers,NA,NA,NA
+BBQ,STONEY CK BLW BLACK BUTTE DAM,US Army Corps of Engineers,ADW,Y,QA complete
 BBW,BW-12 IMPORT TO BUTTE CREEK,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BCD,BUTTE CREEK NR DURHAM,CA Dept of Water Resources/North Region Office,NA,NA,NA
 BCQ,CHOWCHILLA R BLW BUCHANAN DAM,US Army Corps of Engineers,NA,NA,NA
