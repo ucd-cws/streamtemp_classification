@@ -63,13 +63,14 @@ dwr <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% st_transform(4326)
 # CLEAN UP DAILY CDEC DATA -------------------------------------------------------
 
 # DAILY: add C to values and select cols
-cdec_temps_day <- cdec_temps_day %>% 
+cdec_temps_day1 <- cdec_temps_day %>% 
   filter(flag=="N") %>% 
   mutate(value_mean_C = convert_temperature(value, old_metric = "f", new_metric = "c"),
          month_day = mday(datetime),
-         date = as.Date(datetime)) %>% 
+         date = as.Date(datetime),
+         gage_interval="daily") %>% 
   rename(value_mean_F = value) %>% 
-  select(station_id:sensor_type, year, month, water_year, water_day, month_day, value_mean_F, date, value_mean_C)
+  select(station_id:sensor_type, year, month, month_day, date, value_mean_F,  value_mean_C, gage_interval)
 
 # plot all stations daily
 ggplot() +
@@ -90,11 +91,13 @@ cdec_temps_day2 <- cdec_temps_hr %>%
   # filter out bad data
   filter(flag=="N") %>% 
   mutate(month_day = mday(datetime)) %>% 
-  group_by(station_id, dur_code, sensor_num, sensor_type, year, month, water_year, water_day, month_day) %>% 
+  group_by(station_id, dur_code, sensor_num, sensor_type, year, month, month_day) %>% 
   summarize(value_mean_F = mean(value, na.rm=T)) %>% as.data.frame() %>%
   #add a date col back in
   mutate(date = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
-         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"))
+         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"),
+         gage_interval="hourly") %>% 
+  select(station_id:sensor_type, year, month, month_day, date, value_mean_F,  value_mean_C, gage_interval)
 
 # how many unique stations (n=39)
 cdec_temps_day2 %>% distinct(station_id) %>% tally()
@@ -116,10 +119,12 @@ cdec_temps_day3 <- cdec_temps_min %>%
   # filter out bad data
   filter(flag=="N") %>% 
   mutate(month_day = mday(datetime)) %>% 
-  group_by(station_id, dur_code, sensor_num, sensor_type, year, month, water_year, water_day, month_day) %>% 
+  group_by(station_id, dur_code, sensor_num, sensor_type, year, month, month_day) %>% 
   summarize(value_mean_F = mean(value, na.rm=T)) %>% as.data.frame() %>% 
   mutate(date = mdy(paste0(as.integer(month), "-", month_day,"-", year)),
-         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"))
+         value_mean_C = convert_temperature(value_mean_F, old_metric = "f", new_metric = "c"),
+         gage_interval="event") %>% 
+  select(station_id:sensor_type, year, month, month_day, date, value_mean_F,  value_mean_C, gage_interval)
 
 # how many unique stations (n=18)
 cdec_temps_day3 %>% distinct(station_id) %>% tally()
@@ -172,7 +177,7 @@ ggplot() +
 
 # BIND CDEC DATA ------------------------------------------------------------
 
-cdec_daily <- bind_rows(cdec_temps_day, cdec_temps_day2, cdec_temps_day3_rev) # yay!
+cdec_daily <- bind_rows(cdec_temps_day1, cdec_temps_day2, cdec_temps_day3_rev) # yay!
 
 # check how many sites we have:
 cdec_temps_day %>% distinct(station_id) %>% tally # daily
