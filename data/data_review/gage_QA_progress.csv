@@ -1,16 +1,16 @@
 site_id,site_name,operator,reviewer,completed(Y/N),notes
 AFD,AMERICAN R BELOW FOLSOM DAM,US Geological Survey,ADW,Y,QA complete
 AND,SACRAMENTO RIVER AT ANDERSON,CA Dept of Water Resources/North Region Office,NA,NA,NA
-BAS,SOUTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,N,"too many air temp days in dataset, need to convert to daily mean first"
-BBQ,STONEY CK BLW BLACK BUTTE DAM,US Army Corps of Engineers,NA,NA,NA
+BAS,SOUTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
+BBQ,STONEY CK BLW BLACK BUTTE DAM,US Army Corps of Engineers,ADW,Y,QA complete
 BBW,BW-12 IMPORT TO BUTTE CREEK,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
-BCD,BUTTE CREEK NR DURHAM,CA Dept of Water Resources/North Region Office,NA,NA,NA
-BCQ,CHOWCHILLA R BLW BUCHANAN DAM,US Army Corps of Engineers,NA,NA,NA
-BIC,BIG CHICO CREEK NEAR CHICO,CA Dept of Water Resources/North Region Office,NA,NA,NA
+BCD,BUTTE CREEK NR DURHAM,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
+BCQ,CHOWCHILLA R BLW BUCHANAN DAM,US Army Corps of Engineers,ADW,Y,Too unclear whether data is bad or just highly regulated from Buchanan Dam. Dropping gage from analysis.
+BIC,BIG CHICO CREEK NEAR CHICO,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BND,SACRAMENTO RIVER AT BEND BRIDGE,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
-BNF,NORTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,NA,NA,NA
+BNF,NORTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BRE,BEAR R AT ROLLINS RESERVOIR,"Pacific Gas and Electric Company, Auburn",NA,NA,NA
-BSF,SACRAMENTO RIVER AT BALLS FERRY BRIDGE,US Bureau of Reclamation,NA,NA,NA
+BSF,SACRAMENTO RIVER AT BALLS FERRY BRIDGE,US Bureau of Reclamation,ADW,N,"In progress, see notes in code"
 BTG,BUTTE CK AT COLUSA/GRIDLEY RD,CA Dept of Water Resources/North Region Office,NA,NA,NA
 BWC,BUTTE CREEK NR WESTERN CANAL,CA Dept of Water Resources,NA,NA,NA
 CCR,SACRAMENTO RIVER ABOVE CLEAR CK,US Bureau of Reclamation,NA,NA,NA
