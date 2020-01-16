@@ -8,7 +8,7 @@ BCD,BUTTE CREEK NR DURHAM,CA Dept of Water Resources/North Region Office,ADW,Y,Q
 BCQ,CHOWCHILLA R BLW BUCHANAN DAM,US Army Corps of Engineers,ADW,Y,Too unclear whether data is bad or just highly regulated from Buchanan Dam. Dropping gage from analysis.
 BIC,BIG CHICO CREEK NEAR CHICO,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BND,SACRAMENTO RIVER AT BEND BRIDGE,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
-BNF,NORTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,NA,NA,NA
+BNF,NORTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BRE,BEAR R AT ROLLINS RESERVOIR,"Pacific Gas and Electric Company, Auburn",NA,NA,NA
 BSF,SACRAMENTO RIVER AT BALLS FERRY BRIDGE,US Bureau of Reclamation,NA,NA,NA
 BTG,BUTTE CK AT COLUSA/GRIDLEY RD,CA Dept of Water Resources/North Region Office,NA,NA,NA
