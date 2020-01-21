@@ -10,29 +10,29 @@ BIC,BIG CHICO CREEK NEAR CHICO,CA Dept of Water Resources/North Region Office,AD
 BND,SACRAMENTO RIVER AT BEND BRIDGE,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
 BNF,NORTH FORK BATTLE CREEK NEAR MANTON,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BRE,BEAR R AT ROLLINS RESERVOIR,"Pacific Gas and Electric Company, Auburn",NA,NA,NA
-BSF,SACRAMENTO RIVER AT BALLS FERRY BRIDGE,US Bureau of Reclamation,ADW,N,"In progress, see notes in code"
+BSF,SACRAMENTO RIVER AT BALLS FERRY BRIDGE,US Bureau of Reclamation,ADW,Y,QA complete
 BTG,BUTTE CK AT COLUSA/GRIDLEY RD,CA Dept of Water Resources/North Region Office,NA,NA,NA
-BWC,BUTTE CREEK NR WESTERN CANAL,CA Dept of Water Resources,NA,NA,NA
-CCR,SACRAMENTO RIVER ABOVE CLEAR CK,US Bureau of Reclamation,NA,NA,NA
-CDM,EF RUSSIAN R BLW COYOTE DAM,US Army Corps of Engineers,NA,NA,NA
+BWC,BUTTE CREEK NR WESTERN CANAL,CA Dept of Water Resources,ADW,Y,QA complete
+CCR,SACRAMENTO RIVER ABOVE CLEAR CK,US Bureau of Reclamation,ADW,Y,QA complete
+CDM,EF RUSSIAN R BLW COYOTE DAM,US Army Corps of Engineers,ADW,Y,QA complete
 CJC,CANYON CK AT JUNCTION CITY,US Geological Survey,NA,NA,NA
-CLP,STANISLAUS R AT COLLIERVILLE POWERHOUSE,CA Dept of Fish and Wildlife,NA,NA,NA
+CLP,STANISLAUS R AT COLLIERVILLE POWERHOUSE,CA Dept of Fish and Wildlife,ADW,Y,QA complete
 CML,CARMEL RIVER NEAR CARMEL,US Geological Survey,NA,NA,NA
 CRS,MERCED RIVER AT CRESSY,CA Dept of Water Resources/South Central Region Office,ADW,Y,QA complete
 DCH,DEER CREEK AT HWY 32,CA Dept of Water Resources,NA,NA,NA
-DGC,TRINITY RIVER AT DOUGLAS CITY,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
-DLT,SACRAMENTO RIVER AT DELTA,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
-DNB,SAN JOAQUIN R AT DONNY BRIDGE,US Bureau of Reclamation,NA,NA,NA
+DGC,TRINITY RIVER AT DOUGLAS CITY,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
+DLT,SACRAMENTO RIVER AT DELTA,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
+DNB,SAN JOAQUIN R AT DONNY BRIDGE,US Bureau of Reclamation,ADW,Y,QA complete
 DPC,DEL PUERTO CK - USGS,US Geological Survey,NA,NA,NA
-DVD,DEER CREEK BELOW STANFORD VINA DAM,CA Dept of Water Resources/North Region Office,NA,NA,NA
+DVD,DEER CREEK BELOW STANFORD VINA DAM,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 FAR,TRUCKEE RIVER AT FARAD,US Geological Survey,NA,NA,NA
-FHH,FALLS CK NR HETCH HETCHY,City and County of San Francisco,NA,NA,NA
+FHH,FALLS CK NR HETCH HETCHY,City and County of San Francisco,ADW,Y,QA complete
 FOW,FEATHER R OWA SO BOUNDARY NR GRIDLEY,CA Dept of Water Resources/North Region Office,NA,NA,NA
 FRA,FEATHER RIVER AT MILE 61.6,CA Dept of Water Resources/O&M Oroville Field Division,ADW,Y,QA complete
 FS1,MERCED RIVER AT FERGUSON SLIDE UPSTREAM,CA Dept of Transportation,NA,NA,NA
 FS2,MERCED RIVER AT FERGUSON SLIDE DOWNSTRM,CA Dept of Transportation,NA,NA,NA
-FWQ,SAN JOAQUIN R AT FRIANT DAM-WQ,US Bureau of Reclamation,NA,NA,NA
-GDC,STANISLAUS R AT GOODWIN CANYON,CA Dept of Fish and Wildlife,NA,NA,NA
+FWQ,SAN JOAQUIN R AT FRIANT DAM-WQ,US Bureau of Reclamation,ADW,Y,QA complete
+GDC,STANISLAUS R AT GOODWIN CANYON,CA Dept of Fish and Wildlife,ADW,Y,QA complete
 GMB,STANISLAUS R AT GAMBINI PROPERTY,CA Dept of Fish and Wildlife,NA,NA,NA
 GNF,GIANT FOREST (USACE),US Army Corps of Engineers,NA,NA,NA
 GRF,SAN JOAQUIN RIVER AT GRAVELLY FORD,US Bureau of Reclamation,NA,NA,NA
