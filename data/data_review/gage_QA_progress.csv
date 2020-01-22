@@ -42,7 +42,7 @@ GVO,GRASS VALLEY CREEK,US Bureau of Reclamation,ADW,Y,QA complete
 GVT,GRASS VALLEY CK NR LEWISTON H2O TEMP,US Bureau of Reclamation,ADW,Y,QA complete
 H41,SAN JOAQUIN R AT HWY 41,US Bureau of Reclamation,ADW,Y,QA complete
 HEA,RUSSIAN RIVER NEAR HEALDSBURG,USGS and DWR,NA,NA,NA
-HIQ,FRESNO R BLW HIDDEN DAM,US Army Corps of Engineers,NA,NA,NA
+HIQ,FRESNO R BLW HIDDEN DAM,US Army Corps of Engineers,ADW,Y,"QA complete; no changes made, temp highly influenced by dam operations"
 HSP,HOSPITAL CREEK,West Stanislaus ID / SJVDA,NA,NA,NA
 IGO,CLEAR CREEK NEAR IGO,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
 ING,INGRAM CREEK,West Stanislaus ID / SJVDA,NA,NA,NA
