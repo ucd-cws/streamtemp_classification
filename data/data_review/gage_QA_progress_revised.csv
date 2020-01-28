@@ -30,10 +30,10 @@ H41,SAN JOAQUIN R AT HWY 41,-119.7932,36.8762,US Bureau of Reclamation,ADW,Y,QA 
 HIQ,FRESNO R BLW HIDDEN DAM,-119.8869,37.1044,US Army Corps of Engineers,ADW,Y,"QA complete; no changes made, temp highly influenced by dam operations"
 HSP,HOSPITAL CREEK,-121.2308,37.6105,West Stanislaus ID / SJVDA,ADW,Y,QA complete
 IGO,CLEAR CREEK NEAR IGO,-122.524178,40.513206,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
-ING,INGRAM CREEK,-121.2251,37.6002,West Stanislaus ID / SJVDA,NA,NA,NA
-JLF,SACRAMENTO RIVER AT JELLYS FERRY,-122.1897,40.3172,US Bureau of Reclamation,NA,NA,NA
-JMP,STANISLAUS R AT JACOB MEYERS PARK,-120.942,37.743,CA Dept of Fish and Wildlife,NA,NA,NA
-KWK,SACRAMENTO RIVER AT KESWICK,-122.444458,40.600983,US Geological Survey & US Bureau of Reclamation,NA,NA,NA
+ING,INGRAM CREEK,-121.2251,37.6002,West Stanislaus ID / SJVDA,ADW,Y,"Insufficient data available for analysis. No data file saved, gage dropped from study."
+JLF,SACRAMENTO RIVER AT JELLYS FERRY,-122.1897,40.3172,US Bureau of Reclamation,ADW,Y,QA complete
+JMP,STANISLAUS R AT JACOB MEYERS PARK,-120.942,37.743,CA Dept of Fish and Wildlife,ADW,Y,Not enough data for full analysis; station removed from study
+KWK,SACRAMENTO RIVER AT KESWICK,-122.444458,40.600983,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
 LWS,LEWISTON (WATER QUALITY),-122.803635,40.719311,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
 MCH,MILL CREEK BELOW HWY 99,-122.10463,40.040058,CA Dept of Water Resources/North Region Office,NA,NA,NA
 MRB,SAN JOAQUIN R AT MAZE RD BRIDGE,-121.2276,37.6414,CA Dept of Water Resources,ADW,Y,QA complete
