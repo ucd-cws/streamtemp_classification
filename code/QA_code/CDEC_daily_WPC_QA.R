@@ -23,8 +23,6 @@ cdec_daily_WPC <- read_rds(path = paste0("data/data_review/",file_list[[62]]))
 ggplotly(
   ggplot() + geom_point(data=cdec_daily_WPC[,], aes(x=date, y=value_mean_C)))
 
-# Insufficient data for full analysis. Site dropped from study. No data file exported.
-
 # now make an interactive plot of first 1000 values
 ggplotly(
   ggplot() + geom_point(data=cdec_daily_WPC[1:1000,], aes(x=date, y=value_mean_C)))

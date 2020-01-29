@@ -61,7 +61,7 @@ TLK,TRINITY RIVER BELOW LIMEKILN GULCH,-122.919,40.673,US Geological Survey & US
 TTC,TRUCKEE RIVER AT TAHOE CITY,-120.144356,39.166294,US Geological Survey,ADW,N,Data appears to be a relic of old processing; double entries exist for all data from 2012 onward. No data prior to 2012
 TUM,TUOLUMNE MEADOWS,-119.35,37.873,CA Dept of Water Resources,ADW,Y,Insufficient data for full analysis. Site dropped from study.
 WPC,TRINITY RIVER NEAR WEITCHPEC,-123.706,41.179,US Bureau of Reclamation,ADW,Y,QA complete
-WRM,DRY CK BLW WARM SPRINGS DAM,-122.9994,38.7197,US Army Corps of Engineers,NA,NA,NA
+WRM,DRY CK BLW WARM SPRINGS DAM,-122.9994,38.7197,US Army Corps of Engineers,ADW,Y,QA complete
 YRS,YUBA RIVER NEAR SMARTVILLE,-121.274124,39.235172,Pacific Gas & Electric,NA,NA,NA
 10261500,NA,-117.3206018,34.57304916,USGS,NA,NA,NA
 10265150,NA,-118.8176312,37.66882166,USGS,NA,NA,NA
