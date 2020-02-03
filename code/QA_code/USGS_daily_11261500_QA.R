@@ -28,7 +28,37 @@ ggplotly(
   ggplot() + geom_point(data=usgs_daily_11261500[1:1000,], aes(x=date, y=value_mean_C)))
 
 # Review, QA, and Repeat --------------------------------------------------
+usgs_daily_11261500_QA <- usgs_daily_11261500[1:1000,]
 
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[1001:2000,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[1001:2000,])
+
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[2001:3000,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[2001:3000,])
+
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[3001:4000,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[3001:4000,])
+
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[4001:5000,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[4001:5000,])
+
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[5001:6000,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[5001:6000,])
+
+ggplotly(
+  ggplot() + geom_point(data=usgs_daily_11261500[6001:7123,], aes(x=date, y=value_mean_C)))
+
+usgs_daily_11261500_QA <- rbind(usgs_daily_11261500_QA, usgs_daily_11261500[6001:7123,])
 
 # Final review ------------------------------------------------------------
 
