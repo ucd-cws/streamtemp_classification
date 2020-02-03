@@ -21,7 +21,7 @@ cdec_daily_BBW <- read_rds(path = paste0("data/data_review/",file_list[[4]]))
 
 #Plot all points to look for any big gaps/errors
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_BBW[1:7549,], aes(x=date, y=value_mean_C)))
+  ggplot() + geom_point(data=cdec_daily_BBW[,], aes(x=date, y=value_mean_C)))
 
 # now make an interactive plot of first 1000 values
 ggplotly(
