@@ -1,7 +1,7 @@
 site_id,site_name,lon,lat,operator,reviewer,completed_Y_N,notes
 AFD,AMERICAN R BELOW FOLSOM DAM,-121.1667,38.6883,US Geological Survey,ADW,Y,QA complete
 BAS,SOUTH FORK BATTLE CREEK NEAR MANTON,-121.980675,40.405804,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
-BBQ,STONEY CK BLW BLACK BUTTE DAM,-122.3239,39.818600000000004,US Army Corps of Engineers,ADW,Y,QA complete
+BBQ,STONEY CK BLW BLACK BUTTE DAM,-122.3239,39.8186,US Army Corps of Engineers,ADW,Y,QA complete
 BBW,BW-12 IMPORT TO BUTTE CREEK,-121.610329,39.885731,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BCD,BUTTE CREEK NR DURHAM,-121.777481,39.678013,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BCQ,CHOWCHILLA R BLW BUCHANAN DAM,-119.9903,37.2156,US Army Corps of Engineers,ADW,Y,Too unclear whether data is bad or just highly regulated from Buchanan Dam. Dropping gage from analysis.
@@ -12,7 +12,7 @@ BWC,BUTTE CREEK NR WESTERN CANAL,-121.83651,39.555721,CA Dept of Water Resources
 CCR,SACRAMENTO RIVER ABOVE CLEAR CK,-122.356,40.538,US Bureau of Reclamation,ADW,Y,QA complete
 CDM,EF RUSSIAN R BLW COYOTE DAM,-123.1864,39.1975,US Army Corps of Engineers,ADW,Y,QA complete
 CLP,STANISLAUS R AT COLLIERVILLE POWERHOUSE,-120.378,38.143,CA Dept of Fish and Wildlife,ADW,Y,QA complete
-CRS,MERCED RIVER AT CRESSY,-120.663,37.425,CA Dept of Water Resources/South Central Region Office,ADW,Y,QA complete
+CRS,MERCED RIVER AT CRESSY,-120.663,ADW,Y,QA complete,Y,QA complete
 DGC,TRINITY RIVER AT DOUGLAS CITY,-122.956665,40.645279,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
 DLT,SACRAMENTO RIVER AT DELTA,-122.417236,40.939594,US Geological Survey & US Bureau of Reclamation,ADW,Y,QA complete
 DNB,SAN JOAQUIN R AT DONNY BRIDGE,-119.9658,36.8335,US Bureau of Reclamation,ADW,Y,QA complete
