@@ -44,7 +44,10 @@ write_rds(cdec_daily_TTC_QA, path = "data/QA_data/cdec_daily_TTC_QA.rds")
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[gage_QA_progress$site_id=="TTC",6:8] <- c("ADW", "N", "Data appears to be a relic of old processing; double entries exist for all data from 2012 onward. No data prior to 2012")
+gage_QA_progress[gage_QA_progress$site_id=="TTC",6:8] <- c("ADW", "Y", "Insufficient data for full analysis. Site dropped from study.")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")
+
+gage_QA_progress %>% 
+  count(completed_Y_N)
