@@ -13,45 +13,48 @@ library(plotly)
 file_list <- list.files("data/data_review/")
 
 # read in next file:
-file_list[[5]]
+file_list[[50]]
 
-cdec_daily_SDP <- read_rds(path = paste0("data/data_review/",file_list[[5]]))
+cdec_daily_SDP <- read_rds(path = paste0("data/data_review/",file_list[[50]]))
 
 # Plot --------------------------------------------------------------------
 
+ggplotly(
+  ggplot() + geom_point(data=cdec_daily_SDP[,], aes(x=date, y=value_mean_C)))
+
 # now make an interactive plot of first 1000 values
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP[1:1000,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP[1:1000,], aes(x=date, y=value_mean_C)))
 
 # Review, QA, and Repeat --------------------------------------------------
 
 cdec_daily_SDP_1_1000 <- cdec_daily_SDP[1:1000,] %>% 
-  filter(value < 250, value > 32.3)
+  filter( value_mean_C > fahrenheit.to.celsius(32.3))
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP_1_1000, aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP_1_1000, aes(x=date, y=value_mean_C)))
 
 cdec_daily_SDP_QA <- cdec_daily_SDP_1_1000
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP[1001:2000,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP[1001:2000,], aes(x=date, y=value_mean_C)))
 
 cdec_daily_SDP_1001_2000 <- cdec_daily_SDP[1001:2000,] %>% 
-  filter(value > 25.5, datetime != "2013-09-17", datetime != "2014-03-26")
+  filter(value_mean_C > fahrenheit.to.celsius(25.5), date != "2013-09-17", date != "2014-03-26")
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP_1001_2000, aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP_1001_2000, aes(x=date, y=value_mean_C)))
 
 cdec_daily_SDP_QA <- rbind(cdec_daily_SDP_QA, cdec_daily_SDP_1001_2000)
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP[2001:3537,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP[2001:3537,], aes(x=date, y=value_mean_C)))
 
 cdec_daily_SDP_2001_3537 <- cdec_daily_SDP[2001:3537,] %>% 
-  filter(value < 100, value > 42.2)
+  filter(value_mean_C > fahrenheit.to.celsius(42.2))
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_SDP_2001_3537, aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_SDP_2001_3537, aes(x=date, y=value_mean_C)))
 
 cdec_daily_SDP_QA <- rbind(cdec_daily_SDP_QA, cdec_daily_SDP_2001_3537)
 
@@ -60,7 +63,7 @@ cdec_daily_SDP_QA <- rbind(cdec_daily_SDP_QA, cdec_daily_SDP_2001_3537)
 
 #plot QA'd dataset to confirm all points look good
 ggplotly(
-  ggplot() +geom_point(data = cdec_daily_SDP_QA, aes(x=datetime, y=value)))
+  ggplot() +geom_point(data = cdec_daily_SDP_QA, aes(x=date, y=value_mean_C)))
 
 #save QA'd dataset as a .rds file
 write_rds(cdec_daily_SDP_QA, path = "data/QA_data/cdec_daily_SDP_QA.rds")
