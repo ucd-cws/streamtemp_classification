@@ -13,46 +13,46 @@ library(plotly)
 file_list <- list.files("data/data_review/")
 
 # read in next file:
-file_list[[4]]
+file_list[[38]]
 
-cdec_daily_MRB <- read_rds(path = paste0("data/data_review/",file_list[[4]]))
+cdec_daily_MRB <- read_rds(path = paste0("data/data_review/",file_list[[38]]))
 
 # Plot --------------------------------------------------------------------
 
 # now make an interactive plot of first 1000 values
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB[1:1000,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB[1:1000,], aes(x=date, y=value_mean_C)))
 
 # Review, QA, and Repeat --------------------------------------------------
 
 cdec_daily_MRB_QA <- cdec_daily_MRB[1:1000,]
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB[1001:2000,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB[1001:2000,], aes(x=date, y=value_mean_C)))
 
 cdec_daily_MRB_QA <- rbind(cdec_daily_MRB_QA, cdec_daily_MRB[1001:2000,])
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB[2001:2500,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB[2001:2500,], aes(x=date, y=value_mean_C)))
 
 cdec_daily_MRB_2001_2500 <- cdec_daily_MRB[2001:2500,] %>% 
-  filter(datetime != "2015-11-14", datetime != "2015-11-15", datetime != "2015-11-16", datetime != "2015-11-17")
+  filter(date != "2015-11-14", date != "2015-11-15", date != "2015-11-16", date != "2015-11-17")
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB_2001_2500, aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB_2001_2500, aes(x=date, y=value_mean_C)))
 
 cdec_daily_MRB_QA <- rbind(cdec_daily_MRB_QA, cdec_daily_MRB_2001_2500)
 
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB[2501:3520,], aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB[2501:3520,], aes(x=date, y=value_mean_C)))
 
 cdec_daily_MRB_2501_3520 <- cdec_daily_MRB[2501:3520,] %>% 
-  filter(value < 80) 
+  filter(value_mean_C < 30) 
 
 cdec_daily_MRB_2501_3520 <- cdec_daily_MRB_2501_3520[-c(779:786),]
  
 ggplotly(
-  ggplot() + geom_point(data=cdec_daily_MRB_2501_3520, aes(x=datetime, y=value)))
+  ggplot() + geom_point(data=cdec_daily_MRB_2501_3520, aes(x=date, y=value_mean_C)))
 
 cdec_daily_MRB_QA <- rbind(cdec_daily_MRB_QA, cdec_daily_MRB_2501_3520)
 
@@ -60,7 +60,7 @@ cdec_daily_MRB_QA <- rbind(cdec_daily_MRB_QA, cdec_daily_MRB_2501_3520)
 
 #plot QA'd dataset to confirm all points look good
 ggplotly(
-  ggplot() +geom_point(data = cdec_daily_MRB_QA, aes(x=datetime, y=value)))
+  ggplot() +geom_point(data = cdec_daily_MRB_QA, aes(x=date, y=value_mean_C)))
 
 #save QA'd dataset as a .rds file
 write_rds(cdec_daily_MRB_QA, path = "data/QA_data/cdec_daily_MRB_QA.rds")
