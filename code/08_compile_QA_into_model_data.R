@@ -32,18 +32,18 @@ gage_QA_all <- gage_QA_progress %>%
 gage_QA_all <- gage_QA_all %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
-hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% 
-  st_transform(3310)
+#hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% 
+#  st_transform(3310)
 
-mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
+#mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
 
-ggplot()+
-  geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
-  geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
-  annotation_north_arrow(location = "tr", pad_y = unit(0.1,"cm")) +
-  annotation_scale()
-
-ggsave(filename = "output/figures/final_gages_in_hyd_regions.png", dpi = 300, width = 8.5, height = 11, units = "in")
+# ggplot()+
+#   geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
+#   geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
+#   annotation_north_arrow(location = "tr", pad_y = unit(0.1,"cm")) +
+#   annotation_scale()
+# 
+# ggsave(filename = "output/figures/final_gages_in_hyd_regions.png", dpi = 300, width = 8.5, height = 11, units = "in")
 
 # Compile cdec multi-year data into single annual record -----------------------
 
@@ -61,7 +61,11 @@ cdec_site_w_path <- list.files("data/QA_data","cdec_*(.*)rds$",
 
 # now loop through and read in the files
 cdec_dfs <- map(cdec_site_w_path, ~read_rds(.x)) %>%
-bind_rows()
+bind_rows() %>% 
+  filter(!is.na(value_mean_C))
+
+# check for NAs
+summary(cdec_dfs)
 
 # lets see what sites are hourly/datetime and filter those
 
@@ -74,12 +78,11 @@ bind_rows()
 #cdec_datetime %>% group_by(station_id) %>% tally()
 
 # make a dataset of the data that is good (and all daily)
-cdec_clean_df <- cdec_dfs #%>%
-  #filter(is.na(datetime), !is.na(station_id)) %>% 
-  # drop all the old hourly cols that are now totally NAs (check with summary())
-  #select(-c(site_id:water_day))
+cdec_clean_df <- cdec_dfs 
 
 # add water year, water year day, etc:
+# need package: devtools::install_github("ryanpeek/wateRshedTools")
+library(wateRshedTools)
 
 #Ryan's day-of-water-year function
 dowy<-function(YYYYMMDD_HMS) {   # Dates must be POSIXct
@@ -120,6 +123,7 @@ add_WYD <- function(df, datecolumn){
   
 }
 
+# add Water year and Water year dat
 cdec_clean_df <- cdec_clean_df %>% 
   add_WYD(., "date")
 
@@ -132,6 +136,12 @@ cdec_model_data <- cdec_clean_df %>%
   group_by(station_id, DOWY) %>% 
   summarize(mean_temp_C = mean(value_mean_C, na.rm = T))
 
+# To join with month and month day make a clean Join table for DOWY that includes the month and month day
+#cdec_clean_df_monthdays <- cdec_clean_df %>% distinct(month, month_day, DOWY)
+
+# cdec_model_data <- cdec_model_data %>% 
+#   left_join(., cdec_clean_df_monthdays[,c("month","month_day", "DOWY")], by="DOWY")
+
 # Plot cdec model data ----------------------------------------------------
 
 # VIEW!
@@ -141,12 +151,12 @@ ggplotly(
     scale_color_viridis_d())
 
 
-# Split and save cdec_model_data by site ----------------------------------
 
-# to do...add month-day, save each model dataset as an individual file, sorted by site.
-cdec_model_data_split <- split(model_data, model_data$station_id)
+# SAVE DATA ---------------------------------------------------------------
 
 write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
+
+write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
 
 #Repeat code for usgs stations
 
@@ -162,7 +172,12 @@ usgs_site_w_path <- list.files("data/QA_data","usgs_*(.*)rds$",
 
 # now loop through and read in the files
 usgs_dfs <- map(usgs_site_w_path, ~read_rds(.x)) %>%
-  bind_rows()
+  bind_rows() %>% 
+  filter(!is.na(value_mean_C))
+
+# check for NAs
+summary(usgs_dfs)
+
 
 # lets see what sites are hourly/datetime and filter those
 
@@ -198,9 +213,20 @@ ggplotly(
 # looks good! bind to cdec data and save master model data file
 
 write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
+write_rds(usgs_model_data, path = paste0("data/model_data/usgs_model_data.rds"))
 
-cdec_model_data <- read_csv("data/model_data/all_cdec_sites_model_data.csv")
+#cdec_model_data <- read_csv("data/model_data/all_cdec_sites_model_data.csv")
 
-all_sites_model_data <- bind(cdec_model_data, usgs_model_data) #Double-check the format of DOWY; it's different between cdec and usgs dataframes, so I think this is why the rbind is creating a matrix and not a dataframe.
+all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data) 
+
+# save out
+write_csv(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.csv"))
+write_rds(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.rds"))
+
+#Double-check the format of DOWY; it's different between cdec and usgs dataframes, so I think this is why the rbind is creating a matrix and not a dataframe.
 
 #Final step: plot all sites together, then save all_sites_model_data as csv once binding step is resolved.
+ggplotly(
+  ggplot() + 
+    geom_line(data=all_sites_model_data, aes(x=DOWY, y=mean_temp_C, color=station_id), show.legend = F) +
+    scale_color_viridis_d())
