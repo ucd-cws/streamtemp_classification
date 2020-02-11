@@ -15,8 +15,9 @@ library(ggspatial)
 
 library(lubridate)
 library(plotly)
+library(purrr)
 
-# Import list of gages ----------------------------------------------------
+# Import list of all gages ----------------------------------------------------
 
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
@@ -36,10 +37,15 @@ hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>%
 
 mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
 
-#Need to fix map; not sure why data isn't plotting in the correct projection. 
+ggplot()+
+  geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
+  geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
+  annotation_north_arrow(location = "tr", pad_y = unit(0.1,"cm")) +
+  annotation_scale()
 
+ggsave(filename = "output/figures/final_gages_in_hyd_regions.png", dpi = 300, width = 8.5, height = 11, units = "in")
 
-# Compile multi-year data into single annual record -----------------------
+# Compile cdec multi-year data into single annual record -----------------------
 
 ### Write code compiling data into single time series for each data file in the data/QA_data folder.
 
@@ -53,44 +59,117 @@ cdec_site <- list.files(path = "data/QA_data",
 cdec_site_w_path <- list.files("data/QA_data","cdec_*(.*)rds$", 
                                full.names = TRUE, ignore.case = TRUE)
 
-library(purrr)
-
 # now loop through and read in the files
 cdec_dfs <- map(cdec_site_w_path, ~read_rds(.x)) %>%
 bind_rows()
 
 # lets see what sites are hourly/datetime and filter those
-cdec_datetime <- cdec_dfs %>%
-filter(!is.na(datetime))
+
+#ADW: all sites have been fixed, so I commented out these lines 02/11/2020
+
+#cdec_datetime <- cdec_dfs %>%
+#filter(!is.na(datetime))
 
 # what stations are being/need to be fixed?
-cdec_datetime %>% group_by(station_id) %>% tally()
+#cdec_datetime %>% group_by(station_id) %>% tally()
 
 # make a dataset of the data that is good (and all daily)
-cdec_clean_df <- cdec_dfs %>%
-  filter(is.na(datetime), !is.na(station_id)) %>% 
+cdec_clean_df <- cdec_dfs #%>%
+  #filter(is.na(datetime), !is.na(station_id)) %>% 
   # drop all the old hourly cols that are now totally NAs (check with summary())
-  select(-c(site_id:water_day))
+  #select(-c(site_id:water_day))
 
 # add water year, water year day, etc:
-cdec_clean_df <- cdec_clean_df %>% add_WYD(., "date")
 
-names(cdec_clean_df)
+#Ryan's day-of-water-year function
+dowy<-function(YYYYMMDD_HMS) {   # Dates must be POSIXct
+  
+  YYYYMMDD_HMS<-YYYYMMDD_HMS
+  doy<-lubridate::yday(YYYYMMDD_HMS)
+  
+  # make DOWY
+  offsetday = ifelse(month(YYYYMMDD_HMS) > 9, -273, 92)
+  DOWY = doy + offsetday
+  
+  # adjust for leap year
+  offsetyr = ifelse(lubridate::leap_year(YYYYMMDD_HMS), 1, 0) # Leap Year offset
+  adj.wyd = ifelse(offsetyr==1 & doy > 274, DOWY - 1, DOWY)
+  
+  return(adj.wyd)
+}
+
+#Ryan's water year function
+wtr_yr <- function(dates, start_month=10) {
+  # Convert dates into POSIXlt
+  dates.posix = as.POSIXlt(dates)
+  # Year offset
+  offset = ifelse(dates.posix$mon >= start_month - 1, 1, 0)
+  # Water year
+  adj.year = dates.posix$year + 1900 + offset
+  # Return the water year
+  return(adj.year)
+}
+
+#Ryan's add water year data function
+add_WYD <- function(df, datecolumn){
+  datecolumn=datecolumn
+  df["DOY"] <- as.integer(sapply(df[,c(datecolumn)], yday))
+  df["WY"] <- as.integer(sapply(df[,c(datecolumn)], wtr_yr))
+  df["DOWY"] <- as.integer(sapply(df[,c(datecolumn)], dowy))
+  return(df)
+  
+}
+
+cdec_clean_df <- cdec_clean_df %>% 
+  add_WYD(., "date")
 
 # Add month-day (e.g. 01-01) so that when I compile the data into a single dataset, each julian day is associated with a month-day to make interpretation easier.
   
+names(cdec_clean_df)
+
 # now group and average by water day
-model_data <- cdec_clean_df %>% 
+cdec_model_data <- cdec_clean_df %>% 
   group_by(station_id, DOWY) %>% 
   summarize(mean_temp_C = mean(value_mean_C, na.rm = T))
+
+# Plot cdec model data ----------------------------------------------------
 
 # VIEW!
 ggplotly(
   ggplot() + 
-    geom_line(data=model_data, aes(x=DOWY, y=mean_temp_C, color=station_id), show.legend = F) +
+    geom_line(data=cdec_model_data, aes(x=DOWY, y=mean_temp_C, color=station_id), show.legend = F) +
     scale_color_viridis_d())
-  
-# to do...add month-day
 
-# write_csv(model_data, path = paste0("data/model_data/",model_data[1,1],"_model_data.csv"))
-  
+
+# Split and save cdec_model_data by site ----------------------------------
+
+# to do...add month-day, save each model dataset as an individual file, sorted by site.
+cdec_model_data_split <- split(model_data, model_data$station_id)
+
+write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
+
+#Repeat code for usgs stations
+
+# Compile usgs multi-year data into single record -------------------------
+
+# specify the file ending more explicitly to make this more flexible:
+usgs_site <- list.files(path = "data/QA_data", 
+                        pattern = "usgs_*(.*)rds$", ignore.case = TRUE)
+
+# add ignore case
+usgs_site_w_path <- list.files("data/QA_data","usgs_*(.*)rds$", 
+                               full.names = TRUE, ignore.case = TRUE)
+
+# now loop through and read in the files
+usgs_dfs <- map(usgs_site_w_path, ~read_rds(.x)) %>%
+  bind_rows()
+
+# lets see what sites are hourly/datetime and filter those
+usgs_hourly <- usgs_dfs %>%
+  filter(!is.na(site_no))
+
+# what stations are being/need to be fixed?
+usgs_hourly %>% 
+  group_by(site_no) %>% 
+  tally()
+
