@@ -165,11 +165,42 @@ usgs_dfs <- map(usgs_site_w_path, ~read_rds(.x)) %>%
   bind_rows()
 
 # lets see what sites are hourly/datetime and filter those
-usgs_hourly <- usgs_dfs %>%
-  filter(!is.na(site_no))
 
-# what stations are being/need to be fixed?
-usgs_hourly %>% 
-  group_by(site_no) %>% 
-  tally()
+# ADW - all files fixed. Commented out these lines
+# usgs_hourly <- usgs_dfs %>%
+#   filter(!is.na(site_no))
+# 
+# # what stations are being/need to be fixed?
+# usgs_hourly %>% 
+#   group_by(site_no) %>% 
+#   tally()
 
+# create df of clean usgs data
+
+usgs_clean_df <- usgs_dfs %>% 
+  add_WYD(., "date")
+
+names(usgs_clean_df)
+
+# now group and average by water day
+usgs_model_data <- usgs_clean_df %>% 
+  group_by(station_id, DOWY) %>% 
+  summarize(mean_temp_C = mean(value_mean_C, na.rm = T))
+
+# Plot usgs model data ----------------------------------------------------
+
+# VIEW!
+ggplotly(
+  ggplot() + 
+    geom_line(data=usgs_model_data, aes(x=DOWY, y=mean_temp_C, color=station_id), show.legend = F) +
+    scale_color_viridis_d())
+
+# looks good! bind to cdec data and save master model data file
+
+write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
+
+cdec_model_data <- read_csv("data/model_data/all_cdec_sites_model_data.csv")
+
+all_sites_model_data <- bind(cdec_model_data, usgs_model_data) #Double-check the format of DOWY; it's different between cdec and usgs dataframes, so I think this is why the rbind is creating a matrix and not a dataframe.
+
+#Final step: plot all sites together, then save all_sites_model_data as csv once binding step is resolved.
