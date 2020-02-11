@@ -13,66 +13,66 @@ library(plotly)
 file_list <- list.files("data/data_review/")
 
 # read in next file:
-file_list[[88]]
+file_list[[92]]
 
-usgs_daily_11447650 <- read_rds(path = paste0("data/data_review/",file_list[[88]]))
+usgs_daily_11447650 <- read_rds(path = paste0("data/data_review/",file_list[[92]]))
 
 
 # Plot --------------------------------------------------------------------
 
 # now make an interactive plot of first 1000 values
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[1:1000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[1:1000,], aes(x=date, y=value_mean_C)))
 
 # Review, QA, and Repeat --------------------------------------------------
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:1000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[1001:2000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[1001:2000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:2000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[2001:3000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[2001:3000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:3000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[3001:4000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[3001:4000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:4000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[4001:5000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[4001:5000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:5000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[5001:6000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[5001:6000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:6000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[6001:7000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[6001:7000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:7000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[7001:8000,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[7001:8000,], aes(x=date, y=value_mean_C)))
 
 usgs_daily_11447650_QA <- usgs_daily_11447650[1:8000,]
 
 ggplotly(
-  ggplot() + geom_point(data=usgs_daily_11447650[8001:9035,], aes(x=Date, y=X_00010_00003)))
+  ggplot() + geom_point(data=usgs_daily_11447650[8001:8891,], aes(x=date, y=value_mean_C)))
 
-usgs_daily_11447650_QA <- usgs_daily_11447650[1:9035,]
+usgs_daily_11447650_QA <- usgs_daily_11447650[1:8891,]
 
 # Final review ------------------------------------------------------------
 
 #plot QA'd dataset to confirm all points look good
 ggplotly(
-  ggplot() +geom_point(data = usgs_daily_11447650_QA, aes(x=Date, y=X_00010_00003)))
+  ggplot() +geom_point(data = usgs_daily_11447650_QA, aes(x=date, y=value_mean_C)))
 
 # Data is not continuous; however, we still have enough data for the analysis, so we will keep the site.
 
@@ -83,7 +83,7 @@ write_rds(usgs_daily_11447650_QA, path = "data/QA_data/usgs_daily_11447650_QA.rd
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
 #note reviewer initials, whether review is complete, and any final notes
-gage_QA_progress[gage_QA_progress$site_id=="11447650",4:6] <- c("ADW", "Y", "QA complete")
+gage_QA_progress[gage_QA_progress$site_id=="11447650",6:8] <- c("ADW", "Y", "QA complete")
 
 #save updated dataframe to the .csv
 write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")
