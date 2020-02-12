@@ -212,6 +212,9 @@ ggplotly(
 
 # looks good! bind to cdec data and save master model data file
 
+
+# Combine datasets, plot, and save ----------------------------------------
+
 write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
 write_rds(usgs_model_data, path = paste0("data/model_data/usgs_model_data.rds"))
 
