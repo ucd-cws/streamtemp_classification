@@ -10,6 +10,10 @@ library(tidyverse)
 library(lubridate)
 library(plotly)
 
+# Import gage_progress_QA table -------------------------------------------
+
+gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
+
 # Import data -------------------------------------------------------------
 
 SR_PC_raw_2008 <- read_csv("data/Shasta/Shasta_raw/Upper_Shasta_and_Parks_2008.csv", col_names = c("datetime", "julian_day", "SRabvPC", "SRabvBSC", "PC_mouth"), col_types = cols(SRabvBSC = col_double(), PC_mouth = col_double()), skip = 1)
@@ -152,6 +156,9 @@ SRabvPC_master <- SRabvPC_master %>%
   mutate(date = date(date_time2)) %>% 
   select(julian_day, date, month, month_day, year, temp_C)
 
+
+# Create daily, plot, and QA SRabvPC --------------------------------------
+
 SRabvPC_daily <- SRabvPC_master %>% 
   group_by(date, julian_day) %>% 
   summarize(value_mean_C = mean(temp_C))
@@ -167,4 +174,186 @@ SRabvPC_daily_QA <- SRabvPC_daily_QA[-c(2691:2905),]
 ggplotly(
   ggplot() + geom_point(data=SRabvPC_daily_QA[,], aes(x=date, y=value_mean_C)))
 
-write_csv(SRabvPC_daily_QA, path = "data/Shasta/Shasta_QA/SRabvPC_daily_QA.csv")
+write_rds(SRabvPC_daily_QA, path = "data/QA_data/Shasta_SRabvPC_daily_QA.rds")
+
+#update gage_QA_progress table
+#note reviewer initials, whether review is complete, and any final notes
+gage_QA_progress[gage_QA_progress$site_id=="SR_abv_Parks",6:8] <- c("ADW", "Y", "QA complete")
+
+
+# Build raw dataset for SRabvBSC ------------------------------------------
+
+SRabvBSC_2008 <- SR_PC_raw_2008 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_2009 <- SR_PC_raw_2009 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_2008, SRabvBSC_2009)
+
+SRabvBSC_2010 <- SR_PC_raw_2010 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2010)
+
+SRabvBSC_2011 <- SR_PC_raw_2011 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2011)
+
+SRabvBSC_2012 <- SR_PC_raw_2012 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2012)
+
+SRabvBSC_2013 <- SR_PC_raw_2013 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2013)
+
+SRabvBSC_2014 <- SR_PC_raw_2014 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2014)
+
+SRabvBSC_2015 <- SR_PC_raw_2015 %>% 
+  select(date_time2, julian_day, month, month_day, year, SRabvBSC) %>% 
+  filter(!is.na(SRabvBSC)) %>% 
+  rename("temp_C" = SRabvBSC)
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2015)
+
+SRabvBSC_2016_2019 <- SRabvBSC_raw_2016_2019 %>% 
+  select(date_time2, julian_day, month, month_day, year, temp_C) %>% 
+  filter(!is.na(temp_C))
+
+SRabvBSC_master <- rbind(SRabvBSC_master, SRabvBSC_2016_2019)
+
+SRabvBSC_master <- SRabvBSC_master %>% 
+  mutate(date = date(date_time2)) %>% 
+  select(julian_day, date, month, month_day, year, temp_C)
+
+# Create daily, plot, and QA SRabvBSC --------------------------------------
+
+SRabvBSC_daily <- SRabvBSC_master %>% 
+  group_by(date, julian_day) %>% 
+  summarize(value_mean_C = mean(temp_C))
+
+ggplotly(
+  ggplot() + geom_point(data=SRabvBSC_daily[,], aes(x=date, y=value_mean_C)))
+
+SRabvBSC_daily_QA <- SRabvBSC_daily 
+
+ggplotly(
+  ggplot() + geom_point(data=SRabvBSC_daily_QA[,], aes(x=date, y=value_mean_C)))
+
+write_rds(SRabvBSC_daily_QA, path = "data/QA_data/Shasta_SRabvBSC_daily_QA.rds")
+
+#update gage_QA_progress table
+#note reviewer initials, whether review is complete, and any final notes
+gage_QA_progress[gage_QA_progress$site_id=="SR_abv_BSC",6:8] <- c("ADW", "Y", "QA complete")
+
+# Build raw dataset for PC_mouth ------------------------------------------
+
+PC_mouth_2008 <- SR_PC_raw_2008 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_2009 <- SR_PC_raw_2009 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_2008, PC_mouth_2009)
+
+PC_mouth_2010 <- SR_PC_raw_2010 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2010)
+
+PC_mouth_2011 <- SR_PC_raw_2011 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2011)
+
+PC_mouth_2012 <- SR_PC_raw_2012 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2012)
+
+PC_mouth_2013 <- SR_PC_raw_2013 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2013)
+
+PC_mouth_2014 <- SR_PC_raw_2014 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2014)
+
+PC_mouth_2015 <- SR_PC_raw_2015 %>% 
+  select(date_time2, julian_day, month, month_day, year, PC_mouth) %>% 
+  filter(!is.na(PC_mouth)) %>% 
+  rename("temp_C" = PC_mouth)
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2015)
+
+PC_mouth_2016_2019 <- PCmouth_raw_2016_2019 %>% 
+  select(date_time2, julian_day, month, month_day, year, temp_C) %>% 
+  filter(!is.na(temp_C))
+
+PC_mouth_master <- rbind(PC_mouth_master, PC_mouth_2016_2019)
+
+PC_mouth_master <- PC_mouth_master %>% 
+  mutate(date = date(date_time2)) %>% 
+  select(julian_day, date, month, month_day, year, temp_C)
+
+# Create daily, plot, and QA PC_mouth --------------------------------------
+
+PC_mouth_daily <- PC_mouth_master %>% 
+  group_by(date, julian_day) %>% 
+  summarize(value_mean_C = mean(temp_C))
+
+ggplotly(
+  ggplot() + geom_point(data=PC_mouth_daily[,], aes(x=date, y=value_mean_C)))
+
+PC_mouth_daily_QA <- PC_mouth_daily 
+
+ggplotly(
+  ggplot() + geom_point(data=PC_mouth_daily_QA[,], aes(x=date, y=value_mean_C)))
+
+write_rds(PC_mouth_daily_QA, path = "data/QA_data/Shasta_PC_mouth_daily_QA.rds")
+
+#update gage_QA_progress table
+#note reviewer initials, whether review is complete, and any final notes
+gage_QA_progress[gage_QA_progress$site_id=="PC_mouth",6:8] <- c("ADW", "Y", "QA complete")
+
+# Write updated gage_QA_progress table to file ----------------------------
+
+write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")
+
