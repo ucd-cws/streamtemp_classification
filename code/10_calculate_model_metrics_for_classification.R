@@ -180,6 +180,9 @@ hc3 <- diana(d1, metric = "euclidean", stand = FALSE)
 pltree(hc3, cex=0.6, hang=-1, "Dendrogram {diana}: Euclidean")
 rect.hclust(hc3, k=5, border = viridis::viridis(5))
 
+library(ggdendro)
+ggdendrogram(hc3, rotate=TRUE) + theme_classic(base_family = "Roboto Condensed")
+
 # look at cluster divisive coefficient: 
 hc3$dc # very high, means good clusters
 
@@ -194,19 +197,13 @@ ggclust3 + theme_classic() +
 ggsave("output/figures/pc_diana_k3.png", width = 8, height = 6, units="in", dpi=300)
 
 
-# HCLUST: {fpc} -----------------------------------------------------------
+# HCLUST: Stats  -----------------------------------------------------------
 
-library(fpc)
+# calculating the Calinski-Harabasz Index
 
+# custom functions adopted from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R, and following Zumel and Mount (2014)
 
-
-# Extra Junk -----------------------------------------------------------
-
-# see here for some cool plotting options:
-# http://www.ams.med.uni-goettingen.de/download/Steffen-Unkel/cluster1.html
-
-# calculating stats:
-# some custom function from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R
+# calculate distances
 Distance <- function(cluster)
 {
   # the center of the cluster, mean of all the points
@@ -221,7 +218,9 @@ Distance <- function(cluster)
   
   return(distance)
 }
-WSS <- function( data, groups )
+
+# function to calc total within SS (measure of each point to centroid of cluster)
+WSS <- function( data, groups ) 
 {
   k <- max(groups)
   
@@ -239,6 +238,7 @@ WSS <- function( data, groups )
   return( sum(total) )
 }
 
+# using above, add ability to calculate the CH Index
 CHCriterion <- function( data, kmax, clustermethod, ...  )
 {
   if( !clustermethod %in% c( "kmeanspp", "hclust" ) )
@@ -292,9 +292,53 @@ CHCriterion <- function( data, kmax, clustermethod, ...  )
                 plot = plot ) )
 }
 
+
+# APPLY to our Data using the ward method
 kcriteria <- CHCriterion(data = ann_metrics_s, kmax=8,
                          clustermethod = "hclust", method="ward.D2")
 
 kcriteria$data
 kcriteria$plot
-# based on this, could justify either 3 or 5?
+# based on this, could probably justify either 3 or 5...
+
+# HCLUST: {fpc} -----------------------------------------------------------
+
+library(fpc)
+
+# set the desired number of clusters
+k_try <- 5
+
+# try 
+cboot5 <- clusterboot(data = d1, 
+                        clustermethod = hclustCBI,
+                        method="ward.D2", 
+                        k=k_try,
+                        B = 1000 # number of resamples/bootstraps
+                        )
+
+cboot5_grps <- cboot5$result$partition # vector of cluster labels
+print.clboot(cboot5) # look at all outputs
+table(cboot5_grps) # table of how many per group
+cboot5$bootmean # cluster stabilities (Jaccard Scores)
+# so group 3 is highly stable, then group 4 and then group 1. Group 5 is less so
+
+
+## Now try with 3
+k_try <- 3
+
+# try 
+cboot3 <- clusterboot(data = d1, 
+                      clustermethod = hclustCBI,
+                      method="ward.D2", 
+                      k=k_try,
+                      B = 1000 # number of resamples/bootstraps
+)
+
+cboot3_grps <- cboot3$result$partition # vector of cluster labels
+print.clboot(cboot3) # look at Jaccard Scores here
+table(cboot3_grps)
+cboot3$bootmean # highly stable
+
+
+# cluster stats
+cluster.stats(d1, clustering = cboot5_grps)
