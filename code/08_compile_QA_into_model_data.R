@@ -152,9 +152,9 @@ ggplotly(
 
 # SAVE DATA ---------------------------------------------------------------
 
-#write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
+write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
 
-#write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
+write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
 
 #Repeat code for usgs stations
 
@@ -200,6 +200,9 @@ usgs_model_data <- usgs_clean_df %>%
   group_by(station_id, DOWY) %>% 
   summarize(mean_temp_C = mean(value_mean_C, na.rm = T))
 
+write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
+write_rds(usgs_model_data, path = paste0("data/model_data/usgs_model_data.rds"))
+
 # Plot usgs model data ----------------------------------------------------
 
 # VIEW!
@@ -222,19 +225,34 @@ shasta_site_w_path <- list.files("data/QA_data","shasta_*(.*)rds$",
 # now loop through and read in the files
 shasta_dfs <- map(shasta_site_w_path, ~read_rds(.x)) %>%
   bind_rows() %>% 
-  filter(!is.na(value_mean_C))
+  filter(!is.na(value_mean_C)) %>% 
+  rename(station_id = site_id)
 
 # check for NAs
 summary(shasta_dfs)
 
-# Combine datasets, plot, and save ----------------------------------------
+# add Water year and Water year dat
+shasta_clean_df <- shasta_dfs %>% 
+  add_WYD(., "date")
 
-write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
-write_rds(usgs_model_data, path = paste0("data/model_data/usgs_model_data.rds"))
+# now group and average by water day
+shasta_model_data <- shasta_clean_df %>% 
+  group_by(station_id, DOWY) %>% 
+  summarize(mean_temp_C = mean(value_mean_C, na.rm = T)) %>% 
+  select(station_id, DOWY, mean_temp_C)
+
+# save out
+write_csv(shasta_model_data, path = paste0("data/model_data/shasta_model_data.csv"))
+write_rds(shasta_model_data, path = paste0("data/model_data/shasta_model_data.rds"))
+
+# Combine datasets, plot, and save ----------------------------------------
 
 #cdec_model_data <- read_csv("data/model_data/all_cdec_sites_model_data.csv")
 
-all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data) 
+all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data, shasta_model_data) 
+
+summary(all_sites_model_data)
+table(all_sites_model_data$station_id)
 
 # save out
 write_csv(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.csv"))
