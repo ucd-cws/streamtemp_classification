@@ -127,8 +127,6 @@ add_WYD <- function(df, datecolumn){
 cdec_clean_df <- cdec_clean_df %>% 
   add_WYD(., "date")
 
-# Add month-day (e.g. 01-01) so that when I compile the data into a single dataset, each julian day is associated with a month-day to make interpretation easier.
-  
 names(cdec_clean_df)
 
 # now group and average by water day
@@ -226,9 +224,7 @@ all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data)
 write_csv(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.csv"))
 write_rds(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.rds"))
 
-#Double-check the format of DOWY; it's different between cdec and usgs dataframes, so I think this is why the rbind is creating a matrix and not a dataframe.
-
-#Final step: plot all sites together, then save all_sites_model_data as csv once binding step is resolved.
+#Final step: plot all sites together
 ggplotly(
   ggplot() + 
     geom_line(data=all_sites_model_data, aes(x=DOWY, y=mean_temp_C, color=station_id), show.legend = F) +
