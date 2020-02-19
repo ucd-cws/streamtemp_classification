@@ -324,7 +324,8 @@ kcriteria <- CHCriterion(data = ann_metrics_s, kmax=8,
 
 kcriteria$data
 kcriteria$plot
-# based on this, could probably justify either 3 or 5...
+ggsave("output/figures/wss_and_ch_index_for_clusters.png", width = 10, height = 8, units="in", dpi = 300)
+# based on this, looks like 5...
 
 # HCLUST: {fpc} -----------------------------------------------------------
 
