@@ -50,7 +50,7 @@ ann_metrics <- model_out %>%
 
 library(cowplot)
 (pg1 <- plot_grid(gg1, gg2, labels = c("A","B"), label_fontfamily = "Roboto Condensed"))
-#save_plot(pg1, filename = "output/figures/ann_mean_ann_amp_cowplot.png",base_height = 6, dpi=300)
+save_plot(pg1, filename = "output/figures/ann_mean_ann_amp_cowplot.png",base_height = 6, dpi=300)
 
 # Calculate Day of Ann Max ------------------------------------------------
 
@@ -72,12 +72,17 @@ ann_max_day <- model_out %>%
     labs(x="Station ID", 
          y="Day of Annual Max (Day of Water Year)")
 #)
-#ggsave("output/figures/day_of_ann_max_dowy.png", dpi=300, width = 9, height = 7, units = "in")
+ggsave("output/figures/day_of_ann_max_dowy.png", dpi=300, width = 9, height = 7, units = "in")
 
 # Join Together -----------------------------------------------------------
 
 ann_metrics <- left_join(ann_metrics, ann_max_day)
-#save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
+
+# should be 73 rows for 73 sites!
+nrow(ann_metrics)
+
+# save
+save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
 
 # done! 
 
@@ -97,7 +102,6 @@ ann_metrics_s <- ann_metrics %>%
 
 # create Euclidean dissimilarity/distance matrix
 d1 <- dist(ann_metrics_s, method = "euclidean")
-
 
 # HCLUST: {hclust} ------------------------------------------------------------------
 
@@ -146,14 +150,21 @@ pltree(hc2, cex = 0.6, hang = -1, main = "Dendrogram {agnes}: Wards")
 rect.hclust(hc2, k = 3, border = viridis::viridis(3))
 
 # the groups out
-hc2_grps <- cutree(hc2, k=5) # try k=5
-hc2_grps <- cutree(hc2, k=3) # try k=3
-table(hc2_grps)
+hc2_grps_k5 <- cutree(hc2, k=5) # try k=5
+table(hc2_grps_k5)
+hc2_grps_k3 <- cutree(hc2, k=3) # try k=3
 
-ggclust2 <- fviz_cluster(list(data=d1, cluster=hc2_grps))
-ggclust2 + theme_classic() +
+# plot
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
+ggclust2_k5 + theme_classic() +
+  labs(title = "Clusters for CA Thermal Regimes (k=5)")
+ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+
+# plot k=3
+ggclust2_k3 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k3))
+ggclust2_k3 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=3)")
-#ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
+ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
 
 # HCLUST: {NbClust} --------------------------------------------------------
 
@@ -165,12 +176,14 @@ ggclust2 + theme_classic() +
 factoextra::get_clust_tendency(ann_metrics_s, 
                                n = round(.9*nrow(ann_metrics_s), 0), # take 90% of data
                                seed = 123)
-# so value of our data is: 0.906 (so very non uniform!)
+# so value of our data is: 0.89 (so very non-uniform!)
 
 # now check for ideal K using 'NbClust()'
 library(NbClust)
 NbClust(ann_metrics_s, distance = "euclidean", method = "ward.D2")
-# so based on this, a k=3 is best
+# so based on this, a k=3 is best, but 5 methods provided k=5
+
+dev.off() # reset graphics
 
 # HCLUST: {diana} ---------------------------------------------------------
 
@@ -194,7 +207,7 @@ table(hc3_grps) # gives the groups
 ggclust3 <- fviz_cluster(list(data=d1, cluster=hc3_grps))
 ggclust3 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
-#ggsave("output/figures/pc_diana_k3.png", width = 8, height = 6, units="in", dpi=300)
+ggsave("output/figures/pc_diana_k3.png", width = 8, height = 6, units="in", dpi=300)
 
 
 # TangleGram --------------------------------------------------------------
