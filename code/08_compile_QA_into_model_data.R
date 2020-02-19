@@ -152,9 +152,9 @@ ggplotly(
 
 # SAVE DATA ---------------------------------------------------------------
 
-write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
+#write_csv(cdec_model_data, path = paste0("data/model_data/cdec_model_data.csv"))
 
-write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
+#write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
 
 #Repeat code for usgs stations
 
@@ -210,6 +210,22 @@ ggplotly(
 
 # looks good! bind to cdec data and save master model data file
 
+# Add Shasta Data ---------------------------------------------------------
+
+shasta_site <- list.files(path = "data/QA_data", 
+                        pattern = "shasta_*(.*)rds$", ignore.case = TRUE)
+
+# add ignore case
+shasta_site_w_path <- list.files("data/QA_data","shasta_*(.*)rds$", 
+                               full.names = TRUE, ignore.case = TRUE)
+
+# now loop through and read in the files
+shasta_dfs <- map(shasta_site_w_path, ~read_rds(.x)) %>%
+  bind_rows() %>% 
+  filter(!is.na(value_mean_C))
+
+# check for NAs
+summary(shasta_dfs)
 
 # Combine datasets, plot, and save ----------------------------------------
 
