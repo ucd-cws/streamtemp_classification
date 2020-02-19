@@ -11,6 +11,10 @@ library(lubridate)
 library(plotly)
 
 
+# Import gage_progress_QA table -------------------------------------------
+
+gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
+
 # Import data -------------------------------------------------------------
 
 BSC_raw_2008 <- read_csv("data/Shasta/Shasta_raw/BSC_longitudinal_2008.csv", col_names = c("datetime", "julian_day", "BSC_dam", "Busk_bridge", "Pond_upstream", "Pond_downstream", "Blw_ww", "corral bridge", "LDB", "abv LSC", "lowest_xing", "BSC_mouth"), col_types = cols(BSC_dam = col_double()) ,skip = 2)
@@ -149,11 +153,13 @@ BSC_dam_daily <- BSC_dam_master %>%
 ggplotly(
   ggplot() + geom_point(data=BSC_dam_daily[,], aes(x=date, y=value_mean_C)))
 
-BSC_dam_daily_QA <- BSC_dam_daily %>% 
-  mutate(site_id = "BSC_dam")
+BSC_dam_daily_QA <- BSC_dam_daily
 
-#write_csv(BSC_dam_daily_QA, path = "data/Shasta/Shasta_QA/BSC_dam_daily_QA.csv")
-write_rds(BSC_dam_daily_QA, path = "data/QA_data/shasta_daily_BSC_dam_QA.rds")
+write_rds(BSC_dam_daily_QA, path = "data/QA_data/Shasta_BSC_dam_daily_QA.rds")
+
+#update gage_QA_progress table
+#note reviewer initials, whether review is complete, and any final notes
+gage_QA_progress[gage_QA_progress$site_id=="BSC_dam",6:8] <- c("ADW", "Y", "QA complete")
 
 # Build raw datasets for BSC_mouth ----------------------------------------
 
@@ -230,10 +236,12 @@ BSC_mouth_daily <- BSC_mouth_master %>%
 ggplotly(
   ggplot() + geom_point(data=BSC_mouth_daily[,], aes(x=date, y=value_mean_C)))
 
-BSC_mouth_daily_QA <- BSC_mouth_daily %>% 
-  mutate(site_id = "BSC_mouth")
+BSC_mouth_daily_QA <- BSC_mouth_daily
 
-#write_csv(BSC_mouth_daily_QA, path = "data/Shasta/Shasta_QA/BSC_mouth_daily_QA.csv")
+write_rds(BSC_mouth_daily_QA, path = "data/QA_data/Shasta_BSC_mouth_daily_QA.rds")
 
-write_rds(BSC_mouth_daily_QA, path = "data/QA_data/shasta_daily_BSC_mouth_QA.rds")
+#update gage_QA_progress table
+#note reviewer initials, whether review is complete, and any final notes
+gage_QA_progress[gage_QA_progress$site_id=="BSC_mouth",6:8] <- c("ADW", "Y", "QA complete")
 
+write_csv(gage_QA_progress, path = "data/data_review/gage_QA_progress.csv")

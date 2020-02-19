@@ -1,7 +1,7 @@
 site_id,site_name,lon,lat,operator,reviewer,completed_Y_N,notes
 AFD,AMERICAN R BELOW FOLSOM DAM,-121.1667,38.6883,US Geological Survey,ADW,Y,QA complete
 BAS,SOUTH FORK BATTLE CREEK NEAR MANTON,-121.980675,40.405804,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
-BBQ,STONEY CK BLW BLACK BUTTE DAM,-122.3239,39.8186,US Army Corps of Engineers,ADW,Y,QA complete
+BBQ,STONEY CK BLW BLACK BUTTE DAM,-122.3239,39.818600000000004,US Army Corps of Engineers,ADW,Y,QA complete
 BBW,BW-12 IMPORT TO BUTTE CREEK,-121.610329,39.885731,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BCD,BUTTE CREEK NR DURHAM,-121.777481,39.678013,CA Dept of Water Resources/North Region Office,ADW,Y,QA complete
 BCQ,CHOWCHILLA R BLW BUCHANAN DAM,-119.9903,37.2156,US Army Corps of Engineers,ADW,Y,Too unclear whether data is bad or just highly regulated from Buchanan Dam. Dropping gage from analysis.
@@ -94,3 +94,21 @@ YRS,YUBA RIVER NEAR SMARTVILLE,-121.274124,39.235172,Pacific Gas & Electric,ADW,
 11467000,NA,-122.9277737,38.50852336,USGS,ADW,Y,QA complete
 11468900,NA,-123.991423,40.139309,USGS,ADW,Y,QA complete
 11523000,NA,-123.5345036,41.3034599,USGS,ADW,Y,"data unusable, site dropped from analysis"
+NEL20,NA,NA,NA,UCD,NA,NA,NA
+NEL18,NA,NA,NA,UCD,NA,NA,NA
+NEL15,NA,NA,NA,UCD,NA,NA,NA
+NEL12,NA,NA,NA,UCD,NA,NA,NA
+NEL09,NA,NA,NA,UCD,NA,NA,NA
+NEL06,NA,NA,NA,UCD,NA,NA,NA
+NEL05,NA,NA,NA,UCD,NA,NA,NA
+NEL04,NA,NA,NA,UCD,NA,NA,NA
+NEL02,NA,NA,NA,UCD,NA,NA,NA
+NEL01,NA,NA,NA,UCD,NA,NA,NA
+BSC_dam,NA,NA,NA,TNC,ADW,Y,QA complete
+Busk_bridge,NA,NA,NA,UCD,NA,NA,NA
+BSC_WW,NA,NA,NA,TNC,NA,NA,NA
+BSC_LDB,NA,NA,NA,CDFW,NA,NA,NA
+BSC_mouth,NA,NA,NA,CDFW,ADW,Y,QA complete
+SR_abv_BSC,NA,NA,NA,CDFW,ADW,Y,QA complete
+PC_mouth,NA,NA,NA,CDFW,ADW,Y,QA complete
+SR_abv_Parks,NA,NA,NA,CDFW,ADW,Y,QA complete
