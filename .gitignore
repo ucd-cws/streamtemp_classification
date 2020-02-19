@@ -3,4 +3,4 @@
 .Rproj.user
 *.html
 .DS_Store
-output/figures/*
+output/figures/*.html
