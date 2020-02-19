@@ -13,11 +13,8 @@ library(mosaic)
 
 all_sites_model_data <- read_rds("data/model_data/all_sites_model_data.rds")
 
-# create a df for a single site to test the model code.
-
-model_data_AFD <- all_sites_model_data %>% 
-  filter(station_id == "AFD")
-
+# how many sites?
+all_sites_model_data %>% distinct(station_id) %>% nrow() # 73 sites
 
 # Write Functions ---------------------------------------------------------
 
@@ -52,7 +49,6 @@ ggplot(data = df1) +
   geom_point(aes(x=DOWY, y = model_avg_daily_temp_C), alpha=0.5, size=1)+
   labs(x = "julian day", y = "daily mean stream temperature, deg C")
 
-
 # Make combined function -----------------------------------------------------
 
 # this leverages the functions above and runs all at once
@@ -68,8 +64,6 @@ solve_thermal_model <- function(obs_data){
 
 model_df <- all_sites_model_data #%>% split(.$station_id) # split by site ID
 
-# check there are 71 sites
-all_sites_model_data %>% distinct(station_id) %>% nrow()
 
 # Now Build Loop with Purrr -----------------------------------------------
 
@@ -81,7 +75,7 @@ model_out <- model_df %>%
   map(., ~mutate(.data = .x, 
                  model_avg_daily_temp_C = solve_thermal_model(obs_data = .x)))
 
-
+# SUPER FAST!!!
 
 # Recombine Data And Plot -------------------------------------------------
 
@@ -93,7 +87,8 @@ model_out <- model_out %>% bind_rows()
 ggplot(data = model_out) +
   geom_line(aes(x=DOWY, y = mean_temp_C, group=station_id), color="darkblue", alpha=0.5) +
   geom_point(aes(x=DOWY, y = model_avg_daily_temp_C, group=station_id), color="maroon", size=1)+
-  labs(x = "julian day", y = "daily mean stream temperature, deg C")
+  labs(x = "julian day", y = "daily mean stream temperature, deg C") +
+  theme_classic()
 
 ### YAY!!! It works. Next steps: 
 # Model all sites
@@ -102,8 +97,6 @@ ggplot(data = model_out) +
  # - annual amplitude (annual max - annual mean)
  # - day of annual maximum
  # - annual mean
-
-
 
 # Save Out ----------------------------------------------------------------
 

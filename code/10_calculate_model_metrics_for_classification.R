@@ -153,7 +153,7 @@ table(hc2_grps)
 ggclust2 <- fviz_cluster(list(data=d1, cluster=hc2_grps))
 ggclust2 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=3)")
-ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
+#ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
 
 # HCLUST: {NbClust} --------------------------------------------------------
 
@@ -194,7 +194,19 @@ table(hc3_grps) # gives the groups
 ggclust3 <- fviz_cluster(list(data=d1, cluster=hc3_grps))
 ggclust3 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
-ggsave("output/figures/pc_diana_k3.png", width = 8, height = 6, units="in", dpi=300)
+#ggsave("output/figures/pc_diana_k3.png", width = 8, height = 6, units="in", dpi=300)
+
+
+# TangleGram --------------------------------------------------------------
+
+library(dendextend)
+
+# Create two dendrograms
+dend1 <- as.dendrogram (hc2)
+dend2 <- as.dendrogram (hc3)
+
+# no idea how this is useful but it's cool! :)
+tanglegram(dend1, dend2)
 
 
 # HCLUST: Stats  -----------------------------------------------------------
