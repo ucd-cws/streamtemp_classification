@@ -161,7 +161,8 @@ SRabvPC_master <- SRabvPC_master %>%
 
 SRabvPC_daily <- SRabvPC_master %>% 
   group_by(date, julian_day) %>% 
-  summarize(value_mean_C = mean(temp_C))
+  summarize(value_mean_C = mean(temp_C)) %>% 
+  mutate(site_id = "SRabvPC")
 
 ggplotly(
   ggplot() + geom_point(data=SRabvPC_daily[,], aes(x=date, y=value_mean_C)))
@@ -256,7 +257,8 @@ SRabvBSC_daily <- SRabvBSC_master %>%
 ggplotly(
   ggplot() + geom_point(data=SRabvBSC_daily[,], aes(x=date, y=value_mean_C)))
 
-SRabvBSC_daily_QA <- SRabvBSC_daily 
+SRabvBSC_daily_QA <- SRabvBSC_daily %>% 
+  mutate(site_id = "SRabvBSC")
 
 ggplotly(
   ggplot() + geom_point(data=SRabvBSC_daily_QA[,], aes(x=date, y=value_mean_C)))
@@ -342,7 +344,8 @@ PC_mouth_daily <- PC_mouth_master %>%
 ggplotly(
   ggplot() + geom_point(data=PC_mouth_daily[,], aes(x=date, y=value_mean_C)))
 
-PC_mouth_daily_QA <- PC_mouth_daily 
+PC_mouth_daily_QA <- PC_mouth_daily %>% 
+  mutate(site_id = "PC_mouth")
 
 ggplotly(
   ggplot() + geom_point(data=PC_mouth_daily_QA[,], aes(x=date, y=value_mean_C)))
