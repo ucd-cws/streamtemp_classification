@@ -153,7 +153,8 @@ BSC_dam_daily <- BSC_dam_master %>%
 ggplotly(
   ggplot() + geom_point(data=BSC_dam_daily[,], aes(x=date, y=value_mean_C)))
 
-BSC_dam_daily_QA <- BSC_dam_daily
+BSC_dam_daily_QA <- BSC_dam_daily %>% 
+  mutate(station_id = "BSC_dam")
 
 write_rds(BSC_dam_daily_QA, path = "data/QA_data/Shasta_BSC_dam_daily_QA.rds")
 
@@ -236,7 +237,8 @@ BSC_mouth_daily <- BSC_mouth_master %>%
 ggplotly(
   ggplot() + geom_point(data=BSC_mouth_daily[,], aes(x=date, y=value_mean_C)))
 
-BSC_mouth_daily_QA <- BSC_mouth_daily
+BSC_mouth_daily_QA <- BSC_mouth_daily %>% 
+  mutate(station_id = "BSC_mouth")
 
 write_rds(BSC_mouth_daily_QA, path = "data/QA_data/Shasta_BSC_mouth_daily_QA.rds")
 
