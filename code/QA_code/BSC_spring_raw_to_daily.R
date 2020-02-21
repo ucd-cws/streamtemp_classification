@@ -36,7 +36,8 @@ ggplotly(
 
 # Save file ---------------------------------------------------------------
 
-BSC_spring_daily_QA <- north_alcove_spring_raw_daily
+BSC_spring_daily_QA <- north_alcove_spring_raw_daily %>% 
+  mutate(station_id = "BSC_spring")
 
 write_rds(BSC_spring_daily_QA, path = "data/QA_data/Shasta_BSC_spring_daily_QA.rds")
 
