@@ -50,7 +50,7 @@ ann_metrics <- model_out %>%
 
 library(cowplot)
 (pg1 <- plot_grid(gg1, gg2, labels = c("A","B"), label_fontfamily = "Roboto Condensed"))
-save_plot(pg1, filename = "output/figures/ann_mean_ann_amp_cowplot.png",base_height = 6, dpi=300)
+#save_plot(pg1, filename = "output/figures/ann_mean_ann_amp_cowplot.png",base_height = 6, dpi=300)
 
 # Calculate Day of Ann Max ------------------------------------------------
 
@@ -72,7 +72,7 @@ ann_max_day <- model_out %>%
     labs(x="Station ID", 
          y="Day of Annual Max (Day of Water Year)")
 #)
-ggsave("output/figures/day_of_ann_max_dowy.png", dpi=300, width = 9, height = 7, units = "in")
+#ggsave("output/figures/day_of_ann_max_dowy.png", dpi=300, width = 9, height = 7, units = "in")
 
 # Join Together -----------------------------------------------------------
 
@@ -82,7 +82,7 @@ ann_metrics <- left_join(ann_metrics, ann_max_day)
 nrow(ann_metrics)
 
 # save
-save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
+#save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
 
 # done! 
 
@@ -154,17 +154,21 @@ hc2_grps_k5 <- cutree(hc2, k=5) # try k=5
 table(hc2_grps_k5)
 hc2_grps_k3 <- cutree(hc2, k=3) # try k=3
 
+# bind together and save
+agnes_k_groups <- tibble(site_id = ann_metrics$station_id, k_3=hc2_grps_k3, k_5=hc2_grps_k5)
+save(agnes_k_groups, file="output/models/agnes_k_groups_final.rda")
+
 # plot
 ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
-ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+#ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
 
 # plot k=3
 ggclust2_k3 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k3))
 ggclust2_k3 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=3)")
-ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
+#ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=300)
 
 # HCLUST: {NbClust} --------------------------------------------------------
 
