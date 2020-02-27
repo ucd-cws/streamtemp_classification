@@ -14,7 +14,7 @@ library(mosaic)
 all_sites_model_data <- read_rds("data/model_data/all_sites_model_data.rds")
 
 # how many sites?
-all_sites_model_data %>% distinct(station_id) %>% nrow() # 73 sites
+all_sites_model_data %>% distinct(station_id) %>% nrow() # 77 sites
 
 # Write Functions ---------------------------------------------------------
 
