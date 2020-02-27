@@ -22,7 +22,7 @@ library(purrr)
 gage_QA_progress <- read_csv("data/data_review/gage_QA_progress.csv")
 
 gage_QA_all <- gage_QA_progress %>% 
-  filter(notes == "QA complete") %>% 
+  filter(grepl("QA complete", notes)) %>% # fixed this to be more flexible, n=78 now
   select(site_id, site_name, lon, lat, operator)
 
 # Map remaining sites in modeling analysis --------------------------------
@@ -160,6 +160,13 @@ write_rds(cdec_model_data, path = paste0("data/model_data/cdec_model_data.rds"))
 
 # Compile usgs multi-year data into single record -------------------------
 
+
+# fix this error once!
+# usgs_11468900 <- read_rds("data/QA_data/usgs_daily_11468900_QA.rds")
+# # rename to correct station_id
+# usgs_11468900$station_id <- "11468900"
+# saveRDS(usgs_11468900, file = "data/QA_data/usgs_daily_11468900_QA.rds")
+
 # specify the file ending more explicitly to make this more flexible:
 usgs_site <- list.files(path = "data/QA_data", 
                         pattern = "usgs_*(.*)rds$", ignore.case = TRUE)
@@ -176,6 +183,7 @@ usgs_dfs <- map(usgs_site_w_path, ~read_rds(.x)) %>%
 # check for NAs
 summary(usgs_dfs)
 
+usgs_dfs %>% distinct(station_id) %>% tally()
 
 # lets see what sites are hourly/datetime and filter those
 
@@ -198,7 +206,10 @@ names(usgs_clean_df)
 # now group and average by water day
 usgs_model_data <- usgs_clean_df %>% 
   group_by(station_id, DOWY) %>% 
-  summarize(mean_temp_C = mean(value_mean_C, na.rm = T))
+  summarize(mean_temp_C = mean(value_mean_C, na.rm = T)) %>% 
+  ungroup()
+
+usgs_model_data %>% distinct(station_id) %>% tally
 
 write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
 write_rds(usgs_model_data, path = paste0("data/model_data/usgs_model_data.rds"))
@@ -235,11 +246,23 @@ summary(shasta_dfs)
 shasta_clean_df <- shasta_dfs %>% 
   add_WYD(., "date")
 
+# check names
+unique(shasta_clean_df$station_id)
+
 # now group and average by water day
 shasta_model_data <- shasta_clean_df %>% 
   group_by(station_id, DOWY) %>% 
   summarize(mean_temp_C = mean(value_mean_C, na.rm = T)) %>% 
-  select(station_id, DOWY, mean_temp_C)
+  select(station_id, DOWY, mean_temp_C) %>% 
+  ungroup() %>%  # so we can change stuff below
+  # fix station names
+  mutate(station_id = case_when(
+    grepl("SRabvBSC", station_id) ~ "SR_abv_BSC",
+    grepl("SRabvPC", station_id) ~ "SR_abv_Parks",
+    TRUE ~ station_id
+  ))
+
+distinct(shasta_model_data, station_id)  # fixed!
 
 # save out
 write_csv(shasta_model_data, path = paste0("data/model_data/shasta_model_data.csv"))
@@ -247,12 +270,13 @@ write_rds(shasta_model_data, path = paste0("data/model_data/shasta_model_data.rd
 
 # Combine datasets, plot, and save ----------------------------------------
 
-#cdec_model_data <- read_csv("data/model_data/all_cdec_sites_model_data.csv")
-
-all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data, shasta_model_data) 
+all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data, shasta_model_data) %>% 
+  ungroup
 
 summary(all_sites_model_data)
 table(all_sites_model_data$station_id)
+all_sites_model_data %>% distinct(station_id) %>% tally()
+
 
 # save out
 write_csv(all_sites_model_data, path = paste0("data/model_data/all_sites_model_data.csv"))
