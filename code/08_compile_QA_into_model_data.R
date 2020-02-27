@@ -32,11 +32,11 @@ gage_QA_all <- gage_QA_progress %>%
 gage_QA_all <- gage_QA_all %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
-#hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>% 
-#  st_transform(3310)
-
-#mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
-
+# hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>%
+#   st_transform(3310)
+# 
+# mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
+# 
 # ggplot()+
 #   geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
 #   geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
@@ -225,8 +225,8 @@ shasta_site_w_path <- list.files("data/QA_data","shasta_*(.*)rds$",
 # now loop through and read in the files
 shasta_dfs <- map(shasta_site_w_path, ~read_rds(.x)) %>%
   bind_rows() %>% 
-  filter(!is.na(value_mean_C)) %>% 
-  rename(station_id = site_id)
+  filter(!is.na(value_mean_C)) #%>% 
+#  rename(station_id = site_id)
 
 # check for NAs
 summary(shasta_dfs)
