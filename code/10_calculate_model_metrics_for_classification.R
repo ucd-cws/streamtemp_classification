@@ -78,7 +78,7 @@ ggsave("output/figures/day_of_ann_max_dowy.png", dpi=300, width = 9, height = 7,
 
 ann_metrics <- left_join(ann_metrics, ann_max_day)
 
-# should be 73 rows for 73 sites!
+# should be 77 rows for 77 sites!
 nrow(ann_metrics)
 
 # save
@@ -349,6 +349,14 @@ cboot5$bootmean # cluster stabilities (Jaccard Scores)
 # so group 3 is highly stable, then group 4 and then group 1. Group 5 is less so
 
 
+# Save out groups based on bootstrapping
+# make into a dataframe
+cboot5_df <- as.data.frame(cboot5_grps) %>% 
+  rename(k_5=cboot5_grps) %>% 
+  mutate(station_id = rownames(.)) %>% 
+  select(station_id, k_5)
+
+
 ## Now try with 3
 k_try <- 3
 
@@ -365,6 +373,21 @@ print.clboot(cboot3) # look at Jaccard Scores here
 table(cboot3_grps)
 cboot3$bootmean # highly stable
 
+# make df of groups
+cboot3_df <- as.data.frame(cboot3_grps) %>% 
+  rename(k_3=cboot3_grps) %>% 
+  mutate(station_id = rownames(.)) %>% 
+  select(station_id, k_3)
 
 # cluster stats
 cluster.stats(d1, clustering = cboot5_grps)
+
+
+# Bind and Save out Groups ------------------------------------------------
+
+class_groups <- left_join(cboot3_df, cboot5_df)
+
+# save
+write_csv(class_groups, path="output/models/classification_group_results.csv")
+
+save(class_groups, file = "output/models/classification_group_results.rda")
