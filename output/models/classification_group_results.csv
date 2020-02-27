@@ -15,6 +15,7 @@ station_id,k_3,k_5
 11447650,3,3
 11455165,3,3
 11467000,3,3
+11468900,3,3
 AFD,2,2
 BAS,2,2
 BBQ,3,3
@@ -68,8 +69,8 @@ SCQ,3,3
 SDP,3,3
 SHD,1,5
 SJS,3,3
-SRabvBSC,2,2
-SRabvPC,2,2
+SR_abv_BSC,2,2
+SR_abv_Parks,2,2
 SWA,3,3
 TGC,2,2
 TLK,2,2
