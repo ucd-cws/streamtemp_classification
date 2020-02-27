@@ -24,31 +24,21 @@ sites <- all_sites %>%
 
 # Add K_group Data --------------------------------------------------------
 
-load("output/models/classification_group_results.rda") # class_groups
-unique(class_groups$station_id)
+# different classification grouping method
+load("output/models/agnes_k_groups_final.rda") # agnes
+agnes_k_groups <- agnes_k_groups %>% 
+  rename(station_id = site_id)
+
+
+#load("output/models/classification_group_results.rda") # class_groups
+unique(agnes_k_groups$station_id)
 
 # find differences between lists:
-anti_join(sites, class_groups) # localities in sites df not in class_groups
-anti_join(class_groups, sites) # localiteis in class_groups not in sites
-
-# these sites are different and won't join...
-# class_grps  = sites df above
-# HIQ  ?
-# 11468900  ?
-# SRabvBSC = SR_abv_BSC    
-# SRabvPC = SR_abv_Parks 
-
-class_groups <- class_groups %>% 
-  mutate(station_id = case_when(
-    #grepl("HIQ", station_id) ~ "11468900",
-    grepl("SRabvBSC", station_id) ~ "SR_abv_BSC",
-    grepl("SRabvPC", station_id) ~ "SR_abv_Parks",
-    TRUE ~ station_id # if already exists leave it as is
-  ))
+anti_join(sites, agnes_k_groups) # localities in sites df not in agnes_k_groups
+anti_join(agnes_k_groups, sites) # localities in agnes_k_groups not in sites
 
 # join and save
-data_k <- left_join(sites, class_groups) %>% 
-  filter(!is.na(k_3)) # drop the one NA from the group: 11468900
+data_k <- left_join(sites, agnes_k_groups)
 
 # how many per group?
 table(data_k$k_3)
@@ -67,7 +57,45 @@ mapview(data_k_sf, zcol="k_3",
 
 # map k5
 mapview(data_k_sf,  zcol="k_5",
-        #col.regions=RColorBrewer::brewer.pal(5, "Set1") , 
+        col.regions=RColorBrewer::brewer.pal(5, "Set1") , 
         burst=TRUE, hide=FALSE, homebutton=FALSE) +
   mapview(hydro_regions, col.regions = NA, legend=FALSE)
 
+
+
+# Bring in Data -----------------------------------------------------------
+
+load("output/models/annual_cluster_metrics_all_gages.rda")
+
+# join with the groups
+ann_metrics_k <- left_join(ann_metrics, agnes_k_groups) %>% 
+  mutate(k_3 = as.factor(k_3),
+         k_5 = as.factor(k_5))
+
+# ann mean
+gg1 <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_3, y=ann_mean, group=k_3, fill=k_3)) +
+  labs(subtitle = "Ann Mean")
+gg2 <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_5, y=ann_mean, group=k_5, fill=k_5)) +
+  labs(subtitle = "Ann Mean")
+
+cowplot::plot_grid(gg1, gg2, nrow = 2)
+ggsave("output/figures/boxplot_clusters_agnes_ann_mean.png", width = 8, height = 6, units="in", dpi=300)
+
+
+# ann max
+gg1m <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_3, y=ann_max, group=k_3, fill=k_3)) +
+  labs(subtitle = "Ann Max")
+gg2m <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_5, y=ann_max, group=k_5, fill=k_5)) +
+  labs(subtitle = "Ann Max")
+
+cowplot::plot_grid(gg1m, gg2m, nrow = 2)
+ggsave("output/figures/boxplot_clusters_agnes_ann_max.png", width = 8, height = 6, units="in", dpi=300)
+
+# ann amp
+gg1am <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_3, y=ann_amp, group=k_3, fill=k_3)) +
+  labs(subtitle = "Ann Amplitude")
+gg2am <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_5, y=ann_amp, group=k_5, fill=k_5)) +
+  labs(subtitle = "Ann Amplitude")
+
+cowplot::plot_grid(gg1am, gg2am, nrow = 2)
+ggsave("output/figures/boxplot_clusters_agnes_ann_amp.png", width = 8, height = 6, units="in", dpi=300)
