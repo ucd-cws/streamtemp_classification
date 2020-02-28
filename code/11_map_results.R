@@ -10,6 +10,8 @@ library(mapview)
 library(sf)
 library(tidyverse)
 library(ggthemes)
+library(ggrepel)
+library(ggspatial)
 
 # Load data ---------------------------------------------------------------
 
@@ -61,7 +63,14 @@ mapview(data_k_sf,  zcol="k_5",
         burst=TRUE, hide=FALSE, homebutton=FALSE) #+
   #mapview(hydro_regions, col.regions = NA, legend=FALSE)
 
+# Static map for k5 --------------------------------------------------------------
 
+ggplot()+
+  geom_sf(data = hydro_regions, fill = NA, color = 'slategray4', size = 1, alpha = 0.4) +
+  geom_sf(data = data_k_sf, aes(fill = k_5), pch = 21, size = 1) +
+  geom_sf_text(data = hydro_regions, aes(label = HR_NAME), check_overlap = TRUE) +
+  annotation_north_arrow(location = "tr", pad_y = unit(0.1, "cm")) +
+  annotation_scale()
 
 # Bring in Data -----------------------------------------------------------
 
@@ -117,6 +126,6 @@ ggsave("output/figures/boxplot_clusters_agnes_ann_amp.png", width = 8, height = 
 
 
 ## all stacked
-cowplot::plot_grid(gg1, gg1m, gg1am, gg2, gg2m, gg2am, nrow = 2)
+cowplot::plot_grid(gg1, gg1am, gg1m, gg2, gg2am, gg2m,  nrow = 2)
 ggsave("output/figures/boxplot_clusters_agnes_all.png", width = 11, height = 7, units="in", dpi=300)
 ggsave("output/figures/boxplot_clusters_agnes_all.pdf", width = 11, height = 7, units="in", dpi=300)

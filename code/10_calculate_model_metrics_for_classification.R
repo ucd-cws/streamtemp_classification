@@ -108,6 +108,8 @@ tst1 <- factoextra::hkmeans(ann_metrics_s, 3)
 hkmeans_tree(tst1, viridis::viridis(3))
 fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
 
+tst1$centers
+
 # HCLUST: {hclust} ------------------------------------------------------------------
 
 ## Agglomerative Nesting Clustering
