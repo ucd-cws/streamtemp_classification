@@ -78,11 +78,11 @@ ann_max_day <- model_out %>%
 
 ann_metrics <- left_join(ann_metrics, ann_max_day)
 
-# should be 77 rows for 77 sites!
+# should be 78 rows for 78 sites!
 nrow(ann_metrics)
 
 # save
-#save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
+save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
 
 # done! 
 
@@ -102,6 +102,11 @@ ann_metrics_s <- ann_metrics %>%
 
 # create Euclidean dissimilarity/distance matrix
 d1 <- dist(ann_metrics_s, method = "euclidean")
+
+# calc clusters and get means
+tst1 <- factoextra::hkmeans(ann_metrics_s, 3)
+hkmeans_tree(tst1, viridis::viridis(3))
+fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
 
 # HCLUST: {hclust} ------------------------------------------------------------------
 
