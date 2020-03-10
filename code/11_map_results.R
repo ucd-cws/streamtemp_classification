@@ -15,8 +15,10 @@ library(ggspatial)
 
 # Load data ---------------------------------------------------------------
 
-hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>%
+hydro_regions <- read_sf("data/shps//DWR_HydrologicRegions-utm11.shp") %>%
   st_transform(4326)
+
+dams <- read_sf("data/shps/CA_OR_dams.shp", quiet = F) %>% st_transform(4326)
 
 all_sites <- read_csv("data/data_review/gage_QA_progress.csv")
 
@@ -51,17 +53,30 @@ table(data_k$k_5)
 data_k_sf <- data_k %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
+# setup some basemaps
+mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
+              "Esri.WorldImagery", "Esri.WorldTopoMap","Esri.WorldGrayCanvas"
+)
+mapviewOptions(basemaps=mapbases)
+
 # map k3
-mapview(data_k_sf, zcol="k_3", 
+m3 <-   mapview(dams, col.regions="black", alpha.regions=0.8,
+                layer.name="Dams", cex=2,
+                hide=TRUE, homebutton=FALSE)+
+  mapview(data_k_sf, zcol="k_3",
         #col.regions=RColorBrewer::brewer.pal(3, "Set1") , 
-        burst=TRUE, hide=FALSE, homebutton=FALSE) #+
-  #mapview(hydro_regions, col.regions = NA, legend=FALSE)
+        burst=TRUE, hide=FALSE, homebutton=FALSE)
+m3@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # map k5
-mapview(data_k_sf,  zcol="k_5",
-        col.regions=RColorBrewer::brewer.pal(5, "Set1") , 
-        burst=TRUE, hide=FALSE, homebutton=FALSE) #+
-  #mapview(hydro_regions, col.regions = NA, legend=FALSE)
+m5 <- mapview(dams, col.regions="black", alpha.regions=0.8,
+                layer.name="Dams", cex=2,
+                hide=TRUE, homebutton=FALSE)+
+  mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
+          col.regions=RColorBrewer::brewer.pal(5, "Set1") , 
+          burst=TRUE, hide=FALSE, homebutton=FALSE)
+  
+m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # Static map for k5 --------------------------------------------------------------
 
