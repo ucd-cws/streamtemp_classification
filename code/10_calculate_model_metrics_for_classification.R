@@ -169,7 +169,7 @@ save(agnes_k_groups, file="output/models/agnes_k_groups_final.rda")
 ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
-#ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
 
 # plot k=3
 ggclust2_k3 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k3))

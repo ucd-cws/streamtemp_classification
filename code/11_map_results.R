@@ -44,9 +44,24 @@ anti_join(agnes_k_groups, sites) # localities in agnes_k_groups not in sites
 # join and save
 data_k <- left_join(sites, agnes_k_groups)
 
+data_k <- data_k %>% 
+  mutate(k_5=factor(k_5,
+                    labels = c("stable warm","unreg cool",
+                               "reg warm", "reg cool",
+                               "stable cold"
+                               )))
+
 # how many per group?
 table(data_k$k_3)
 table(data_k$k_5)
+
+# Thermal Classifications
+# 
+# "stable cold"= 5, 
+# "unreg cool"= 2, 
+# "reg warm"= 3, 
+# "reg cool" = 4,
+# "stable warm" = 1
 
 # make spatial ------------------------------------------------------------
 
@@ -77,6 +92,12 @@ m5 <- mapview(dams, col.regions="black", alpha.regions=0.8,
           burst=TRUE, hide=FALSE, homebutton=FALSE)
   
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+
+
+# Get Nearest Dams --------------------------------------------------------
+
+try(st_nearest_points(data_k_sf, dams[st_nearest_feature(data_k_sf, dams)], pairwise=FALSE))
+mapview(data_dams)
 
 # Static map for k5 --------------------------------------------------------------
 
