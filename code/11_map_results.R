@@ -68,6 +68,12 @@ table(data_k$k_5)
 data_k_sf <- data_k %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
+# get nearest dams
+dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
+
+# save out data for future mapping
+save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
+
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
               "Esri.WorldImagery", "Esri.WorldTopoMap","Esri.WorldGrayCanvas"
@@ -75,7 +81,7 @@ mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "Ope
 mapviewOptions(basemaps=mapbases)
 
 # map k3
-m3 <-   mapview(dams, col.regions="black", alpha.regions=0.8,
+m3 <-   mapview(dams_nearest, col.regions="black", alpha.regions=0.8,
                 layer.name="Dams", cex=2,
                 hide=TRUE, homebutton=FALSE)+
   mapview(data_k_sf, zcol="k_3",
@@ -84,7 +90,7 @@ m3 <-   mapview(dams, col.regions="black", alpha.regions=0.8,
 m3@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # map k5
-m5 <- mapview(dams, col.regions="black", alpha.regions=0.8,
+m5 <- mapview(dams_nearest, col.regions="black", alpha.regions=0.8,
                 layer.name="Dams", cex=2,
                 hide=TRUE, homebutton=FALSE)+
   mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
@@ -94,10 +100,6 @@ m5 <- mapview(dams, col.regions="black", alpha.regions=0.8,
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 
-# Get Nearest Dams --------------------------------------------------------
-
-try(st_nearest_points(data_k_sf, dams[st_nearest_feature(data_k_sf, dams)], pairwise=FALSE))
-mapview(data_dams)
 
 # Static map for k5 --------------------------------------------------------------
 

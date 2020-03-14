@@ -82,7 +82,7 @@ ann_metrics <- left_join(ann_metrics, ann_max_day)
 nrow(ann_metrics)
 
 # save
-save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
+#save(ann_metrics, file = "output/models/annual_cluster_metrics_all_gages.rda")
 
 # done! 
 
@@ -104,8 +104,8 @@ ann_metrics_s <- ann_metrics %>%
 d1 <- dist(ann_metrics_s, method = "euclidean")
 
 # calc clusters and get means
-tst1 <- factoextra::hkmeans(ann_metrics_s, 3)
-hkmeans_tree(tst1, viridis::viridis(3))
+tst1 <- factoextra::hkmeans(ann_metrics_s, 5)
+hkmeans_tree(tst1, viridis::viridis(5))
 fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
 
 tst1$centers
