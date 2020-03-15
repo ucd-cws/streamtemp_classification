@@ -1,7 +1,6 @@
-
 # Code description --------------------------------------------------------
 
-# This code add the Shasta coordinates to the gage list and maps the cluster results from code 10_calculate_model_metrics_for_classification
+# this gets streamlines and dams, snaps points to streamlines and calculates distance to nearest dam
 
 
 # Libraries ---------------------------------------------------------------
@@ -20,17 +19,12 @@ library(wateRshedTools)
 # clustering data and dams
 load("output/models/agnes_k_groups_sf_w_dams.rda")
 
-# hydro regions (don't really need)
-hydro_regions <- read_sf("data/shps//DWR_HydrologicRegions-utm11.shp") %>%
-  st_transform(4326)
-
 # Thermal Classifications
 # "stable warm" = 1
 # "reg warm"= 3, 
 # "reg cool" = 4,
 # "unreg cool"= 2, 
 # "stable cold"= 5, 
-
 
 # Reorder Classifications -------------------------------------------------
 
@@ -57,7 +51,6 @@ thermCols <- with(data_k_sf,
                                        ))))
 thermCols
 
-
 # use "match" to match colors
 #thermCols$color[match(data_k_sf$k_5, thermCols$k_5)]
 
@@ -77,6 +70,103 @@ legend(x = 'bottomright',
        legend = as.character(thermCols$k_5),
        col = thermCols$color,
        pch = 16, bty = 'n', xjust = 1)
+
+# GET COMID FOR GAGES -----------------------------------------------------
+
+library(nhdplusTools)
+
+# get the COMID for each gage in list
+usgs_segs <- data_k_sf %>% 
+  split(.$station_id) %>% # split by ID
+  # then apply this function to each split to get COMID
+  map(~discover_nhdplus_id(.x$geometry))
+
+# now have a list of all COMIDs, check for duplicates
+usgs_segs %>% 
+  purrr::map_lgl(~ length(.x)>1) %>% table() # all FALSE
+ # to look for TRUE try this: .[.==TRUE] 
+
+# to see as a dataframe:
+usgs_segs <- unlist(usgs_segs) %>% as_tibble(rownames = "station_id") %>% 
+  rename(comid = value)
+
+# save the USGS station COMIDs file:
+write_rds(usgs_segs, path="output/12_selected_gage_comids.rds")
+write_csv(usgs_segs, path="output/12_selected_gage_comids.csv")
+
+# GET UPSTREAM FLOWLINES --------------------------------------------------
+
+# use the list of comids to pass to the nhdplusTools function
+coms_list <- map(usgs_segs$comid, ~list(featureSource = "comid", featureID=.x))
+
+# Get Upstream mainstem segs, this can take a minute
+mainstemsUS <- map(coms_list, ~navigate_nldi(nldi_feature = .x,
+                                             mode="upstreamMain",
+                                             #distance_km = 10,
+                                             data_source = ""))
+
+# make a single flat layer
+mainstems_flat_us <- mainstemsUS %>%
+  set_names(., usgs_segs$station_id) %>%
+  map2(usgs_segs$station_id, ~mutate(.x, station_id=.y))
+
+# bind together
+mainstems_us <- do.call(what = sf:::rbind.sf,
+                        args = mainstems_flat_us)
+
+# remove rownames
+rownames(mainstems_us) <- c()
+
+# add direction to gage col
+mainstems_us <- mainstems_us %>% 
+  mutate(from_gage = "US")
+
+rm(mainstems_flat_us, mainstemsUS)
+
+# GET DOWNSTREAM FLOWLINES ------------------------------------------------
+
+# get NHD segments downstream of selected USGS gages, 30 km buffer
+mainstemsDS <- map(coms_list, ~navigate_nldi(nldi_feature = .x,
+                                             mode="downstreamMain",
+                                             distance_km = 30,
+                                             data_source = ""))
+
+# make a single flat layer
+mainstems_flat_ds <- mainstemsDS %>%
+  set_names(., usgs_segs$station_id) %>%
+  map2(usgs_segs$station_id, ~mutate(.x, station_id=.y))
+
+
+# bind together
+mainstems_ds <- do.call(what = sf:::rbind.sf,
+                        args = mainstems_flat_ds)
+
+# remove weird rownames
+rownames(mainstems_ds) <- c()
+
+# add direction to gage col
+mainstems_ds <- mainstems_ds %>% 
+  mutate(from_gage = "DS")
+
+rm(mainstems_flat_ds, mainstemsDS)
+
+# bind all mainstems
+mainstems_all <- rbind(mainstems_us, mainstems_ds)
+
+# quick check
+mapview(dams_nearest, col.regions="black", cex=2) + 
+  mapview(mainstems_us, color="darkblue", lwd=0.7) +
+  mapview(mainstems_ds, color="purple", lwd=1.5) +
+  mapview(data_k_sf, col.regions="orange", cex=4)
+
+## now use this to search for dams nearest to the site that occur in same comid/nhdline list. Then calc distance via segments.
+# see here as well: https://stackoverflow.com/questions/57116416/snap-points-to-line-in-order-in-r
+
+# * SAVE OUT STREAMLINES FOR GAGES ------------------------------------------
+
+save(mainstems_all, file="output/12_selected_nhd_mainstems_for_gages.rda")
+
+save(mainstems_us, mainstems_ds, file = "output/12_selected_nhd_mainstems_for_gages_us_ds.rda")
 
 # Get Nearest Dams --------------------------------------------------------
 
@@ -131,6 +221,14 @@ ggsave(filename="output/figures/agnes_k_5_classification_map.png", dpi=300, widt
 
 
 
+
+# Snap Points to River
+
+
+
+# buffer the points by the tolerance
+points_buf <- st_buffer(points, 15)
+# intersect the line with the buffer
+line_intersect <- st_intersection(line, points_buf)
+
 # Calc Centroid Distances -------------------------------------------------
-
-
