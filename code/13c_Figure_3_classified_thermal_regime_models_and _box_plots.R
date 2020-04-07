@@ -8,6 +8,7 @@
 
 library(tidyverse)
 library(cowplot)
+library(ggthemes)
 
 # Figure 3: Classified thermal regimes ----------------------
 
@@ -25,10 +26,19 @@ merge_models_and_classes <- left_join(all_sites_model_data, classification_group
 
 # Model Fig (A) -----------------------------------------------------------
 
+class_names <- c(
+  "stable warm" = "stable warm",
+  "reg warm" = "regulated warm",
+  "reg cool" = "regulated cool",
+  "unreg cool" = "unregulated cool",
+  "stable cold" = "stable cold"
+)
+
+
 (gg_top <- ggplot(data = merge_models_and_classes) + 
     geom_line(aes(x=DOWY, y=model_avg_daily_temp_C, group = station_id, color = color), show.legend = FALSE)+
     #facet_grid(cols = vars(k_5)) +
-    facet_wrap(vars(k_5), ncol = 5) +
+    facet_wrap(vars(k_5), ncol = 5, labeller = labeller(k_5 = class_names)) +
     labs(x = "day of water year", 
          y = expression("modelled avg daily temp " (degree*C))) +
     theme_clean() + 
