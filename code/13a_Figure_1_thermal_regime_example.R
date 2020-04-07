@@ -42,13 +42,27 @@ ggplot(data = Sac_11390500_model_data) +
   geom_segment(aes(x = 293, y = 8, xend = 293, yend = annual_max), linetype = "dashed") +
   geom_segment(aes(x = 1, y = annual_mean, xend = 200, yend = annual_mean), linetype = "dashed") +
   geom_segment(aes(x = 1, y = annual_max, xend = 293, yend = annual_max), linetype = "dashed") +
+  # add arrows for amplitude here:
+  geom_segment(aes(x = 130, xend = 130, 
+                   y = annual_mean + 3, yend = annual_max-0.1), 
+               arrow = arrow(length = unit(0.2,"cm"),
+                             type = "closed", angle = 25),
+               lineend = "round", linejoin = "mitre") +
+  # add arrows for amplitude here:
+  geom_segment(aes(x = 130, xend = 130, 
+                   y = annual_max - 4, yend = annual_mean + 0.1), 
+               arrow = arrow(length = unit(0.2,"cm"), 
+                             type = "closed", angle = 25),
+               lineend = "round", linejoin = "mitre") +
   ylim(8,22) +
   xlim(1,366) +
-  labs(x = "day of water year", y = "daily mean stream temperature, deg C") +
+  labs(x = "day of water year", 
+       y = expression("daily mean stream temperature " (degree*C))) +
   annotate("text", x = 220, y = annual_mean, label = "mean") +
   annotate("text", x = 130, y = annual_mean+2.5, label = "amplitude") +
   annotate("text", x = 315, y = annual_mean-2, label = "phase") +
   theme_classic() +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
+# save
 ggsave("output/figures/Fig_1_thermal_regime_model.jpeg", width = 6, height = 3.5, units = "in", dpi=300)
