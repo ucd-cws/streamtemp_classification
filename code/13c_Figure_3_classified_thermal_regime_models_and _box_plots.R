@@ -24,6 +24,30 @@ merge_models_and_classes <- left_join(all_sites_model_data, classification_group
   filter(!is.na(k_5))
 
 
+# Annual max metrics for table --------------------------------------------
+
+
+stable_warm <- merge_models_and_classes %>% 
+  filter(k_5 == "stable warm")
+max(stable_warm$model_avg_daily_temp_C)
+
+reg_warm <- merge_models_and_classes %>% 
+  filter(k_5 == "reg warm")
+mean(max(reg_warm$model_avg_daily_temp_C))
+
+reg_cool <- merge_models_and_classes %>% 
+  filter(k_5 == "reg cool")
+mean(max(reg_cool$model_avg_daily_temp_C))
+
+unreg_cool <- merge_models_and_classes %>% 
+  filter(k_5 == "unreg cool")
+mean(max(unreg_cool$model_avg_daily_temp_C))
+
+stable_cold <- merge_models_and_classes %>% 
+  filter(k_5 == "stable cold")
+mean(max(stable_cold$model_avg_daily_temp_C))
+
+
 # Model Fig (A) -----------------------------------------------------------
 
 class_names <- c(
