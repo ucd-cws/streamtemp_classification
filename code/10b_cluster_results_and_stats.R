@@ -191,12 +191,26 @@ member_locations_2_4 <- member_locations %>%
 
 #Extract centers of each cluster
 
+class_2 <- member_locations_2_4 %>% 
+  filter(cluster == "2")
 
+mean_x_2 <- mean(class_2$x)
+mean_y_2 <- mean(class_2$y)
 
+class_4 <- member_locations_2_4 %>% 
+  filter(cluster == "4")
 
+mean_x_4 <- mean(class_4$x)
+mean_y_4 <- mean(class_4$y)
 
 #Add a column that calculates distance between class centroid and member point
 
+class_2$dist_to_centroid <- sqrt((mean_x_2-class_2$x)^2 + (mean_y_2-class_2$y)^2)
 
+class_2 <- class_2 %>% 
+  arrange(desc(dist_to_centroid))
 
+class_4$dist_to_centroid <- sqrt((mean_x_2-class_4$x)^2 + (mean_y_2-class_4$y)^2)
 
+class_4 <- class_4 %>% 
+  arrange(desc(dist_to_centroid))
