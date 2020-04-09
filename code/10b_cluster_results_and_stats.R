@@ -186,8 +186,27 @@ kcriteria$plot
 
 # Alternative?? -----------------------------------------------------------
 
-# for WSS plot, try using this option (from factoextra package)
-fviz_nbclust(ann_metrics_s, kmeans, method="wss", diss=d1) + geom_vline(xintercept = 5, linetype=3, col="gray")
+# nice overview here: https://bradleyboehmke.github.io/HOML/hierarchical.html#determining-optimal-clusters
+
+# WSS::elbow methods: define clusters such that the total within-cluster variation is minimized, so choose a k that minimizes the total within-cluster sum of squares (a measure of the compactness of the clustering).
+p1 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "wss", 
+                   k.max = 8) + 
+  #geom_vline(xintercept = 5, linetype=3, col="gray") +
+  ggtitle("WSS/Elbow method")
+
+# Silhouette method (Rousseeuw 1987)
+p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette", 
+                   k.max = 8) +
+  ggtitle("Silhouette method")
+
+# Gap statistic (Tibshirani, Walther, and Hastie 2001)
+p3 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "gap_stat", 
+                   k.max = 8) +
+  ggtitle("Gap statistic")
+
+# Display plots side by side
+(p4 <-cowplot::plot_grid(p1, p2, p3, nrow = 1, labels = c("B","C","D")))
+
 
 # Plot distance to centroid for each member in classes 2 and 4 --------
 
@@ -198,8 +217,10 @@ member_locations_2_4 <- member_locations %>%
   filter(cluster != "5") %>% 
   filter(cluster != "3")
 
-#Extract centers of each cluster
+# check numbers:
+table(member_locations_2_4$cluster)
 
+#Extract centers of each cluster
 class_2 <- member_locations_2_4 %>% 
   filter(cluster == "2")
 
@@ -213,7 +234,6 @@ mean_x_4 <- mean(class_4$x)
 mean_y_4 <- mean(class_4$y)
 
 #Add a column that calculates distance between class centroid and member point
-
 class_2$dist_to_centroid <- sqrt((mean_x_2-class_2$x)^2 + (mean_y_2-class_2$y)^2)
 
 class_2 <- class_2 %>% 
@@ -223,3 +243,15 @@ class_4$dist_to_centroid <- sqrt((mean_x_2-class_4$x)^2 + (mean_y_2-class_4$y)^2
 
 class_4 <- class_4 %>% 
   arrange(desc(dist_to_centroid))
+
+## map?
+library(sf)
+load("output/models/agnes_k_groups_v2_w_selected_dams.rda")
+
+# join w spatial data:
+class_cent_df <- bind_rows(class_2, class_4)
+data_sf <- left_join(data_k_sf_v2, class_cent_df[,c(1,5,6)], by=c("station_id"="name"))
+
+library(mapview)
+mapview(data_sf, zcol="dist_to_centroid") + 
+  mapview(data_sf, zcol="k_5", col.regions=c("#E41A1C", "#FF7F00", "#984EA3", "#4DAF4A", "#377EB8"), legend=F)
