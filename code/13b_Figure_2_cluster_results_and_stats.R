@@ -20,6 +20,13 @@ library(ggplotify)
 load("output/models/annual_cluster_metrics_all_gages.rda")
 load("output/models/agnes_k_groups_final.rda")
 
+# DROP CANAL SITE ---------------------------------------------------------
+
+# note: this site: BW-12 IMPORT TO BUTTE CREEK is a canal and should be dropped
+agnes_k_groups <- agnes_k_groups %>% filter(site_id != "BBW")
+
+ann_metrics <- ann_metrics %>% filter(station_id != "BBW")
+
 # CLUSTERING: Scale & Create Dist Matrix ------------------------------------------------
 
 # first double check for NAs
@@ -34,22 +41,12 @@ ann_metrics_s <- ann_metrics %>%
 # create Euclidean dissimilarity/distance matrix
 d1 <- dist(ann_metrics_s, method = "euclidean")
 
-# calc clusters and get means
-tst1 <- factoextra::hkmeans(ann_metrics_s, 5)
-hkmeans_tree(tst1, viridis::viridis(5))
-fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
-
-tst1$centers
-
 # HCLUST: {agnes} -------------------------------------------------------
 
 # Agglomerative Nesting Clustering
 
 # use agnes to get agglomerative coefficient
 # closer to 1 is stronger clusterings
-hc2 <- agnes(d1, method = "ward")
-hc2$ac
-
 # try diff methods to assess
 m <- c( "average", "single", "complete", "ward")
 names(m) <- c( "average", "single", "complete", "ward")
@@ -59,30 +56,60 @@ ac <- function(x) {
   agnes(d1, method = x)$ac
 }
 
-# so wards is still best option here...
+# so wards is best option here...
+# Ward’s minimum variance criterion minimizes the total within-cluster variance
 map_dbl(m, ac)
 
+# use Wards with agnes:
+hc <- agnes(d1, method = "ward")
+hc$ac # the agglomerative coefficient
+
 # plot and add clusters
-pltree(hc2, cex = 0.6, hang = -1, main = "Dendrogram {agnes}: Wards") 
-rect.hclust(hc2, k = 5, border = viridis::viridis(5))
+pltree(hc, cex = 0.6, hang = -1, main = "Dendrogram {agnes}: Wards") 
+rect.hclust(hc, k = 5, border = viridis::viridis(5))
 
-# the groups out
-hc2_grps_k5 <- cutree(hc2, k=5) # try k=5
-table(hc2_grps_k5)
+# save the groups out
+hc_grps_k5 <- cutree(hc, k=5) # try k=5
+table(hc_grps_k5)
 
-# plot
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
+# Make a Cluster PCA Plot
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc_grps_k5))
 
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
 
-
-
 #ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+
+# Identify best K ---------------------------------------------------------
+
+# nice overview here: https://bradleyboehmke.github.io/HOML/hierarchical.html#determining-optimal-clusters
+
+# elbow methods:
+# elbow method: define clusters such that the total within-cluster variation is minimized, so choose a k that minimizes the total within-cluster sum of squares (a measure of the compactness of the clustering).
+
+# use existing scaled data to determine best k
+p1 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "wss", 
+                   k.max = 8) +
+  ggtitle("Elbow method")
+
+# Silhouette method (Rousseeuw 1987)
+p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette", 
+                   k.max = 8) +
+  ggtitle("Silhouette method")
+
+# Gap statistic (Tibshirani, Walther, and Hastie 2001)
+p3 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "gap_stat", 
+                   k.max = 8) +
+  ggtitle("Gap statistic")
+
+# Display plots side by side
+(p4 <-cowplot::plot_grid(p1, p2, p3, nrow = 1, labels = c("B","C","D")))
+
+
 
 # HCLUST: Stats  -----------------------------------------------------------
 
-# calculating the Calinski-Harabasz Index
+# calculating the Calinski-Harabasz Index: best K is one that corresponds to the greatest value of the index
 
 # custom functions adopted from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R, and following Zumel and Mount (2014)
 
@@ -204,12 +231,13 @@ k_stats <- as.data.frame(kcriteria$data)
   theme_classic() +
   theme(legend.position = "none"))
 
-fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), ncol = 2)
+fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
 
 #ggsave("output/figures/Fig_2_cluster_results_and_stats.jpeg", width = 5, height = 4, units="in", dpi = 300)
 
-plot_grid(plot_pc_k5, fig_row_2, labels = c("A"), nrow = 2, rel_heights = 1.5,1)
+plot_grid(plot_pc_k5, fig_row_2, labels = c("A"), nrow = 2, rel_heights = c(1.5,1))
 
-#ggsave("output/figures/Fig_2_cluster_results_and_stats.jpeg", width = 6, height = 8, units="in", dpi = 300)
+plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1))
+ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 300)
 
 #Couldn't figure out how to recreate the pc_agnes_k5 plot in a way that would allow me to combine it with the CHIndex and wss plots using cowplot. For now, I'm just using the standalone plot (saved on line 79) for the paper.

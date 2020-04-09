@@ -18,6 +18,13 @@ library(ggplotify)
 load("output/models/annual_cluster_metrics_all_gages.rda")
 load("output/models/agnes_k_groups_final.rda")
 
+# DROP CANAL SITE ---------------------------------------------------------
+
+# note: this site: BW-12 IMPORT TO BUTTE CREEK is a canal and should be dropped
+agnes_k_groups <- agnes_k_groups %>% filter(site_id != "BBW")
+
+ann_metrics <- ann_metrics %>% filter(station_id != "BBW")
+
 # CLUSTERING: Scale & Create Dist Matrix ------------------------------------------------
 
 # first double check for NAs
@@ -33,11 +40,10 @@ ann_metrics_s <- ann_metrics %>%
 d1 <- dist(ann_metrics_s, method = "euclidean")
 
 # calc clusters and get means
-tst1 <- factoextra::hkmeans(ann_metrics_s, 5)
-hkmeans_tree(tst1, viridis::viridis(5))
-fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
-
-tst1$centers
+#tst1 <- factoextra::hkmeans(ann_metrics_s, 5)
+#hkmeans_tree(tst1, viridis::viridis(5))
+#fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
+#tst1$centers
 
 # HCLUST: {agnes} -------------------------------------------------------
 
@@ -73,8 +79,6 @@ ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
 
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)")
-
-
 
 # HCLUST: Stats  -----------------------------------------------------------
 
@@ -179,6 +183,11 @@ kcriteria <- CHCriterion(data = ann_metrics_s, kmax=8,
 kcriteria$data
 kcriteria$plot
 
+
+# Alternative?? -----------------------------------------------------------
+
+# for WSS plot, try using this option (from factoextra package)
+fviz_nbclust(ann_metrics_s, kmeans, method="wss", diss=d1) + geom_vline(xintercept = 5, linetype=3, col="gray")
 
 # Plot distance to centroid for each member in classes 2 and 4 --------
 
