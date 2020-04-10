@@ -214,7 +214,7 @@ kcriteria$plot
 # Make final plots --------------------------------------------------------
 
 
-plot_pc_k5 <- as.ggplot(ggclust2_k5 + theme_classic() + #also tried as.grob(); no luck
+plot_pc_k5 <- as.ggplot(ggclust2_k5 + theme_classic() + 
   labs(title = "Clusters for CA Thermal Regimes (k=5)"))
 
 k_stats <- as.data.frame(kcriteria$data)
@@ -239,5 +239,3 @@ plot_grid(plot_pc_k5, fig_row_2, labels = c("A"), nrow = 2, rel_heights = c(1.5,
 
 plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1))
 ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 300)
-
-#Couldn't figure out how to recreate the pc_agnes_k5 plot in a way that would allow me to combine it with the CHIndex and wss plots using cowplot. For now, I'm just using the standalone plot (saved on line 79) for the paper.
