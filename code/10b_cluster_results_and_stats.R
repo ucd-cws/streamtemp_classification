@@ -82,6 +82,33 @@ ggclust2_k5 + theme_classic() +
 
 # HCLUST: Stats  -----------------------------------------------------------
 
+# now check for ideal K using 'NbClust()'
+library(NbClust)
+NbClust(ann_metrics_s, distance = "euclidean", method = "ward.D2")
+# so based on this, a k=3 is best, but 5 methods provided k=5
+
+library(fpc)
+
+# set the desired number of clusters
+k_try <- 5
+
+# try 
+cboot5 <- clusterboot(data = d1, 
+                      clustermethod = hclustCBI,
+                      method="ward.D2", 
+                      k=k_try,
+                      B = 1000 # number of resamples/bootstraps
+)
+
+cboot5_grps <- cboot5$result$partition # vector of cluster labels
+print.clboot(cboot5) # look at all outputs
+table(cboot5_grps) # table of how many per group
+cboot5$bootmean # cluster stabilities (Jaccard Scores)
+
+# get a ton of stats based on the cluster groups
+cluster.stats(d1, clustering = cboot5_grps)
+
+
 # calculating the Calinski-Harabasz Index
 
 # custom functions adopted from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R, and following Zumel and Mount (2014)
