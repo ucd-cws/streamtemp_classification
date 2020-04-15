@@ -140,6 +140,16 @@ cdec_model_data <- cdec_clean_df %>%
 # cdec_model_data <- cdec_model_data %>% 
 #   left_join(., cdec_clean_df_monthdays[,c("month","month_day", "DOWY")], by="DOWY")
 
+# how many total?
+length(unique(cdec_model_data$station_id))
+
+# drop the canal site "BBW"
+cdec_model_data <- cdec_model_data %>% filter(station_id!="BBW")
+
+# should be 54
+length(unique(cdec_model_data$station_id))
+
+
 # Plot cdec model data ----------------------------------------------------
 
 # VIEW!
@@ -209,6 +219,7 @@ usgs_model_data <- usgs_clean_df %>%
   summarize(mean_temp_C = mean(value_mean_C, na.rm = T)) %>% 
   ungroup()
 
+# should be 17
 usgs_model_data %>% distinct(station_id) %>% tally
 
 write_csv(usgs_model_data, path = paste0("data/model_data/usgs_model_data.csv"))
@@ -275,6 +286,8 @@ all_sites_model_data <- bind_rows(cdec_model_data, usgs_model_data, shasta_model
 
 summary(all_sites_model_data)
 table(all_sites_model_data$station_id)
+
+# this should be 77 sites (as of 2020-04-14)
 all_sites_model_data %>% distinct(station_id) %>% tally()
 
 
