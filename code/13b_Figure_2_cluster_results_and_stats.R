@@ -98,12 +98,12 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
   ggtitle("Silhouette method")
 
 # Gap statistic (Tibshirani, Walther, and Hastie 2001)
-p3 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "gap_stat", 
-                   k.max = 8) +
-  ggtitle("Gap statistic")
+#p3 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "gap_stat", 
+#                   k.max = 8) +
+#  ggtitle("Gap statistic")
 
 # Display plots side by side
-(p4 <-cowplot::plot_grid(p1, p2, p3, nrow = 1, labels = c("B","C","D")))
+(p4 <-cowplot::plot_grid(p1, p2, nrow = 1, labels = c("B","C")))
 
 
 
