@@ -294,13 +294,18 @@ data_k_sf %>% st_drop_geometry %>%
   left_join(grp_cnts) %>% 
   ggplot() + geom_col(aes(x= k_5, y=mean_dam_dist_km), fill=thermCols$color, alpha=0.8) + theme_classic()
 
+ggsave("output/figures/mean_dist_to_dam_by_k5.png", width = 8, height = 6, units = "in", dpi = 300)
+
 # filter out to just reg warm/reg cool
 data_k_sf %>% st_drop_geometry() %>% 
   filter(k_5 %in% c("reg warm", "reg cool")) %>% 
   group_by(k_5) %>% 
-  ggplot() + geom_histogram(aes(x=dist_to_dam_km), binwidth = 3, bins = 50) +
-  facet_wrap(k_5~.)
+  ggplot() + geom_histogram(aes(x=dist_to_dam_km, fill=color), 
+                            #color=c("#FF7F00", "#984EA3"), 
+                            binwidth = 3, bins = 50) +
+  facet_wrap(k_5~.) + theme_clean()
 
+ggsave("output/figures/hist_dist_to_dam_by_reg_cool_warm.png", width = 8, height = 6, units = "in", dpi = 300)
 
 # 09: STATIC MAP FOR k=5 --------------------------------------------------------------
 
