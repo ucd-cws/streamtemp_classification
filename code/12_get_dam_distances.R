@@ -237,47 +237,70 @@ saveRDS(dams_selected, file = "output/12_selected_dam_comids.rds")
 
 # can also select nearest dams with st_nearest:
 # BUT this will select the nearest dam for every single gage, even if not in same watershed (irrespective of watersheds or distance)
-#dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
 
+# use this after selecting dams (to keep in same drainage), to figure out distances
+dams_nearest <- dams_selected[st_nearest_feature(data_k_sf, dams_selected),]
 
 
 # 07: GET DISTANCE TO NEAREST DAM -----------------------------------------
 
 # need to make sure this is in same CRS...
 # transform to UTM for more accurate grid using 3310
+dams_nearest <- st_transform(dams_nearest, 3310)
 dams_selected <- st_transform(dams_selected, 3310)
 data_k_sf <- st_transform(data_k_sf, 3310)
 mainstems_all <- st_transform(mainstems_all, 3310)
 
 # get distance to nearest DAM from GAGE:
 # this gives a matrix of each dam and each gage
-dam_dist_matrix <- st_distance(dams_selected, data_k_sf, 
+dam_dist_matrix <- st_distance(dams_nearest, data_k_sf, 
             by_element = FALSE) %>% units::set_units("km")
 
 # this gets a measurement for each gage but....not sure about it
 data_k_sf <- data_k_sf %>% 
   mutate(
-    dist_to_dam_m = as.vector(st_distance(dams_selected, ., 
+    dist_to_dam_m = as.vector(st_distance(dams_nearest, ., 
                                           by_element = TRUE)),
     dist_to_dam_km = dist_to_dam_m/1000)
 
-# warning is ok...just means there ar fewer dams than gages...
-# save it out:
-save(data_k_sf, file = "output/models/agnes_k_groups_w_selected_dams.rda")
+save(data_k_sf, file = "output/models/agnes_k_groups_w_selected_dams_v2.rda")
 
 # 08: MAPVIEW IT! ------------------------------------------------------------------
 
 # map it!
-m5 <- mapview(dams_selected, col.regions="black", color="gray50",
+m5 <- mapview(dams_nearest, col.regions="black", color="gray50",
               alpha.regions=0.8,
               layer.name="Dams", cex=2,
               hide=TRUE, homebutton=FALSE)+
-  mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
-          col.regions=unique(data_k_sf$color), alpha.regions=0.8, 
-          burst=TRUE, hide=FALSE, homebutton=FALSE) +
+  mapview(data_k_sf, zcol="k_5", map.types=mapbases,
+          col.regions=unique(data_k_sf$color), 
+          alpha.regions=0.8, 
+          hide=FALSE, homebutton=FALSE) +
   mapview(mainstems_all, zcol="from_gage", lwd=2)
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+
+# in looking at this, there are a bunch of diversions that should be dropped...and focus on just the larger dams. 
+
+
+# 08B: Look at Distances by Group -----------------------------------------
+
+data_k_sf %>% st_drop_geometry %>% 
+  group_by(k_5) %>% tally() -> grp_cnts
+
+data_k_sf %>% st_drop_geometry %>% 
+  group_by(k_5) %>%  
+  summarize(mean_dam_dist_km = mean(dist_to_dam_km)) %>%
+  left_join(grp_cnts) %>% 
+  ggplot() + geom_col(aes(x= k_5, y=mean_dam_dist_km), fill=thermCols$color, alpha=0.8) + theme_classic()
+
+# filter out to just reg warm/reg cool
+data_k_sf %>% st_drop_geometry() %>% 
+  filter(k_5 %in% c("reg warm", "reg cool")) %>% 
+  group_by(k_5) %>% 
+  ggplot() + geom_histogram(aes(x=dist_to_dam_km), binwidth = 3, bins = 50) +
+  facet_wrap(k_5~.)
+
 
 # 09: STATIC MAP FOR k=5 --------------------------------------------------------------
 
@@ -292,54 +315,4 @@ ggplot()+
   annotation_scale(location="br")
 
 ggsave(filename="output/figures/agnes_k_5_classification_map.png", dpi=300, width=8, height = 11.5, units="in")
-
-# THIS IS ALL SCRATCH ----------------------------------------------------------------
-
-# make a matrix of touching riversegs
-# library(rgeos)
-# 
-# # Create a matrix of segments that touch (so contiguous streamlines)
-# touching_rivers <- st_touches(mainstems_all, sparse = FALSE)
-# 
-# # Merge all rivers that touch each other and convert all
-# rivers_hclust <- hclust(as.dist(!touching_rivers), method = "single")
-# 
-# # Cut the dendrogram at height=0.5 so all touching rivers cluster together
-# rivers_groups <- cutree(rivers_hclust, h = 0.5)
-# 
-# # check
-# table(rivers_groups)
-# 
-# # filter to a single group: Sacramento
-# sac_sf <- mainstems_all[rivers_groups == 5, ]
-# # filter to a single group: Sacramento
-# sj_sf <- mainstems_all[rivers_groups == 4, ]
-# # check
-# mapview(sac_sf, color="blue", lwd=2) + mapview(sj_sf, color="purple3", lwd=2)
-# 
-# 
-# # Estimate the nearest point 
-# nearest_point <- data_k_sf_v2 %>%
-#   mutate(
-#     index_of_nearest_feature = st_nearest_feature(., dams_selected),
-#     nearest_feature = st_geometry(sac_sf[index_of_nearest_feature,]),
-#     nearest_point = purrr::pmap(
-#       list(geometry, nearest_feature),
-#       ~ st_nearest_points(.x, .y) %>% 
-#         st_cast("POINT") %>%
-#         magrittr::extract2(2))) %>%
-#   pull(nearest_point) %>% 
-#   st_as_sfc(., crs=3310) #%>% 
-# #st_cast("POINT")  %>% 
-# 
-# mapview(sac_sf, color="red",lwd=2) + nearest_point + 
-#   mapview(data_k_sf_v2, col.regions="orange")+
-#   mapview(dams_selected, col.regions="black")
-# 
-# 
-# # Snap Points to River
-# # buffer the points by the tolerance
-# points_buf <- st_buffer(points, 15)
-# # intersect the line with the buffer
-# line_intersect <- st_intersection(line, points_buf)
 

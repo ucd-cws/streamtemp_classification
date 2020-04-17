@@ -107,9 +107,10 @@ m5 <- mapview(dams_nearest, col.regions="black", alpha.regions=0.8,
                 layer.name="Dams", cex=2,
                 hide=TRUE, homebutton=FALSE)+
   mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
-          col.regions=RColorBrewer::brewer.pal(5, "Set1") , 
-          burst=TRUE, hide=FALSE, homebutton=FALSE)
-  
+          col.regions=unique(thermCols$color), 
+          alpha.regions=0.8, 
+          hide=FALSE, homebutton=FALSE) 
+
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 
