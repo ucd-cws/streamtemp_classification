@@ -239,27 +239,23 @@ saveRDS(dams_selected, file = "output/12_selected_dam_comids.rds")
 # BUT this will select the nearest dam for every single gage, even if not in same watershed (irrespective of watersheds or distance)
 #dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
 
-# 07: DROP CANAL SITE ---------------------------------------------------------
-
-# note: this site: BW-12 IMPORT TO BUTTE CREEK is a canal and should be dropped
-data_k_sf_v2 <- data_k_sf %>% filter(station_id != "BBW")
 
 
-# 08: GET DISTANCE TO NEAREST DAM -----------------------------------------
+# 07: GET DISTANCE TO NEAREST DAM -----------------------------------------
 
 # need to make sure this is in same CRS...
 # transform to UTM for more accurate grid using 3310
 dams_selected <- st_transform(dams_selected, 3310)
-data_k_sf_v2 <- st_transform(data_k_sf_v2, 3310)
+data_k_sf <- st_transform(data_k_sf, 3310)
 mainstems_all <- st_transform(mainstems_all, 3310)
 
 # get distance to nearest DAM from GAGE:
 # this gives a matrix of each dam and each gage
-dam_dist_matrix <- st_distance(dams_selected, data_k_sf_v2, 
+dam_dist_matrix <- st_distance(dams_selected, data_k_sf, 
             by_element = FALSE) %>% units::set_units("km")
 
 # this gets a measurement for each gage but....not sure about it
-data_k_sf_v2 <- data_k_sf_v2 %>% 
+data_k_sf <- data_k_sf %>% 
   mutate(
     dist_to_dam_m = as.vector(st_distance(dams_selected, ., 
                                           by_element = TRUE)),
@@ -267,23 +263,23 @@ data_k_sf_v2 <- data_k_sf_v2 %>%
 
 # warning is ok...just means there ar fewer dams than gages...
 # save it out:
-save(data_k_sf_v2, file = "output/models/agnes_k_groups_v2_w_selected_dams.rda")
+save(data_k_sf, file = "output/models/agnes_k_groups_w_selected_dams.rda")
 
-# 09: MAPVIEW IT! ------------------------------------------------------------------
+# 08: MAPVIEW IT! ------------------------------------------------------------------
 
 # map it!
 m5 <- mapview(dams_selected, col.regions="black", color="gray50",
               alpha.regions=0.8,
               layer.name="Dams", cex=2,
               hide=TRUE, homebutton=FALSE)+
-  mapview(data_k_sf_v2,  zcol="k_5", map.types=mapbases,
+  mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
           col.regions=unique(data_k_sf$color), alpha.regions=0.8, 
           burst=TRUE, hide=FALSE, homebutton=FALSE) +
   mapview(mainstems_all, zcol="from_gage", lwd=2)
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
-# 10: STATIC MAP FOR k=5 --------------------------------------------------------------
+# 09: STATIC MAP FOR k=5 --------------------------------------------------------------
 
 ggplot()+
   geom_sf(data=USAboundaries::us_boundaries(type="state", states="ca")$geometry, fill = NA, color = 'slategray4', size = 1, alpha = 0.4) +

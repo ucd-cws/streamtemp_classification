@@ -85,7 +85,7 @@ data_k_sf <- data_k %>%
 dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
 
 # save out data for future mapping
-#save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
+save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
