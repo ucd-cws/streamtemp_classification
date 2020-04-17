@@ -72,13 +72,40 @@ rect.hclust(hc, k = 5, border = viridis::viridis(5))
 hc_grps_k5 <- cutree(hc, k=5) # try k=5
 table(hc_grps_k5)
 
-# Make a Cluster PCA Plot
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc_grps_k5))
+# plot without labels
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
 
+# plot with text labels
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
+
+# gg pca plot
 ggclust2_k5 + theme_classic() +
-  labs(title = "Clusters for CA Thermal Regimes (k=5)")
+  labs(title = "Clusters for CA Thermal Regimes (k=5)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = "")))
 
-#ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+# thermColor scale
+thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
+                        k5_names  = c("stable warm", "reg warm",
+                                      "reg cool", "unreg cool",
+                                      "stable cold"),
+                        color = I(c("#E41A1C", #stable warm
+                                    "#FF7F00", #reg warm
+                                    "#984EA3", #reg cool
+                                    "#4DAF4A", #unreg cool
+                                    "#377EB8" #stable cold
+                        )))
+
+# check
+(plot_pc_k5 <- ggclust2_k5 + theme_classic() +
+  scale_fill_manual("Thermal \nClasses", values=thermCols$color)+
+  scale_color_manual("Thermal \nClasses", values=thermCols$color)+
+  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8))+
+  labs(title = "Clusters for CA Thermal Regimes (k=5)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = ""))))
+
+ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
 
 # Identify best K ---------------------------------------------------------
 
@@ -107,115 +134,8 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 
 
 
-# HCLUST: Stats  -----------------------------------------------------------
-
-# calculating the Calinski-Harabasz Index: best K is one that corresponds to the greatest value of the index
-
-# custom functions adopted from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R, and following Zumel and Mount (2014)
-
-# calculate distances
-Distance <- function(cluster)
-{
-  # the center of the cluster, mean of all the points
-  center <- colMeans(cluster)
-  
-  # calculate the summed squared error between every point and 
-  # the center of that cluster 
-  distance <- apply( cluster, 1, function(row)
-  {
-    sum( ( row - center )^2 )
-  }) %>% sum()
-  
-  return(distance)
-}
-
-# function to calc total within SS (measure of each point to centroid of cluster)
-WSS <- function( data, groups ) 
-{
-  k <- max(groups)
-  
-  # loop through each groups (clusters) and obtain its 
-  # within sum squared error 
-  total <- lapply( 1:k, function(k)
-  {
-    # extract the data point within the cluster
-    cluster <- subset( data, groups == k )
-    
-    distance <- Distance(cluster)
-    return(distance)
-  }) %>% unlist()
-  
-  return( sum(total) )
-}
-
-# using above, add ability to calculate the CH Index
-CHCriterion <- function( data, kmax, clustermethod, ...  )
-{
-  if( !clustermethod %in% c( "kmeanspp", "hclust" ) )
-    stop( "method must be one of 'kmeanspp' or 'hclust'" )
-  
-  # total sum squared error (independent with the number of cluster k)
-  tss <- Distance( cluster = data )
-  
-  # initialize a numeric vector storing the score
-  wss <- numeric(kmax)
-  
-  # k starts from 2, cluster 1 is meaningless
-  if( clustermethod == "kmeanspp" )
-  {
-    for( k in 2:kmax )
-    {
-      results <- Kmeanspp( data, k, ... )
-      wss[k]  <- results$tot.withinss 
-    }		
-  }else # "hclust"
-  {
-    d <- dist( data, method = "euclidean" )
-    clustering <- hclust( d, ... )
-    for( k in 2:kmax )
-    {
-      groups <- cutree( clustering, k )
-      wss[k] <- WSS( data = data, groups =  groups )
-    }
-  }		
-  
-  # between sum of square
-  bss <- tss - wss[-1]
-  
-  # cluster count start from 2! 
-  numerator <- bss / ( 1:(kmax-1) )
-  denominator <- wss[-1] / ( nrow(data) - 2:kmax )
-  
-  criteria <- data.frame( k = 2:kmax,
-                          CHIndex = numerator / denominator,
-                          wss = wss[-1] )
-  
-  # convert to long format for plotting 
-  criteria_long <- gather( criteria, "index", "value", -1 )
-  
-  plot <- ggplot( criteria_long, aes( k, value, color = index ) ) + 
-    geom_line() + geom_point( aes( shape = index ), size = 3 ) +
-    facet_wrap( ~ index, scale = "free_y" ) + 
-    guides( color = FALSE, shape = FALSE )
-  
-  return( list( data = criteria, 
-                plot = plot ) )
-}
-
-
-# APPLY to our Data using the ward method
-kcriteria <- CHCriterion(data = ann_metrics_s, kmax=8,
-                         clustermethod = "hclust", method="ward.D2")
-
-kcriteria$data
-kcriteria$plot
-
 
 # Make final plots --------------------------------------------------------
-
-
-plot_pc_k5 <- as.ggplot(ggclust2_k5 + theme_classic() + 
-  labs(title = "Clusters for CA Thermal Regimes (k=5)"))
 
 k_stats <- as.data.frame(kcriteria$data)
 
@@ -235,7 +155,8 @@ fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
 
 #ggsave("output/figures/Fig_2_cluster_results_and_stats.jpeg", width = 5, height = 4, units="in", dpi = 300)
 
-plot_grid(plot_pc_k5, fig_row_2, labels = c("A"), nrow = 2, rel_heights = c(1.5,1))
+plot_grid(plot_pc_k5, p1, p2, labels = c("A", "B", "C"), nrow = 2, rel_heights = c(1.5,1))
 
-plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1))
+plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1,1), rel_widths = c(1,.5,.5))
+
 ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 300)
