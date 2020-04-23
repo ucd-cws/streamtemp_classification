@@ -18,13 +18,6 @@ library(ggplotify)
 load("output/models/annual_cluster_metrics_all_gages.rda")
 load("output/models/agnes_k_groups_final.rda")
 
-# DROP CANAL SITE ---------------------------------------------------------
-
-# note: this site: BW-12 IMPORT TO BUTTE CREEK is a canal and should be dropped
-agnes_k_groups <- agnes_k_groups %>% filter(site_id != "BBW")
-
-ann_metrics <- ann_metrics %>% filter(station_id != "BBW")
-
 # CLUSTERING: Scale & Create Dist Matrix ------------------------------------------------
 
 # first double check for NAs
@@ -39,12 +32,6 @@ ann_metrics_s <- ann_metrics %>%
 # create Euclidean dissimilarity/distance matrix
 d1 <- dist(ann_metrics_s, method = "euclidean")
 
-# calc clusters and get means
-#tst1 <- factoextra::hkmeans(ann_metrics_s, 5)
-#hkmeans_tree(tst1, viridis::viridis(5))
-#fviz_cluster(tst1, show.clust.cent = T, ggtheme = theme_bw())
-#tst1$centers
-
 # HCLUST: {agnes} -------------------------------------------------------
 
 # Agglomerative Nesting Clustering
@@ -54,18 +41,6 @@ d1 <- dist(ann_metrics_s, method = "euclidean")
 hc2 <- agnes(d1, method = "ward")
 hc2$ac
 
-# try diff methods to assess
-m <- c( "average", "single", "complete", "ward")
-names(m) <- c( "average", "single", "complete", "ward")
-
-# function to compute coefficient
-ac <- function(x) {
-  agnes(d1, method = x)$ac
-}
-
-# so wards is still best option here...
-map_dbl(m, ac)
-
 # plot and add clusters
 pltree(hc2, cex = 0.6, hang = -1, main = "Dendrogram {agnes}: Wards") 
 rect.hclust(hc2, k = 5, border = viridis::viridis(5))
@@ -74,11 +49,40 @@ rect.hclust(hc2, k = 5, border = viridis::viridis(5))
 hc2_grps_k5 <- cutree(hc2, k=5) # try k=5
 table(hc2_grps_k5)
 
-# plot
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5))
+# plot without labels
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
 
+# plot with text labels
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
+
+# gg pca plot
 ggclust2_k5 + theme_classic() +
-  labs(title = "Clusters for CA Thermal Regimes (k=5)")
+  labs(title = "Clusters for CA Thermal Regimes (k=5)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = "")))
+
+# thermColor scale
+thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
+                        k5_names  = c("stable warm", "reg warm",
+                                      "reg cool", "unreg cool",
+                                      "stable cold"),
+                        color = I(c("#E41A1C", #stable warm
+                                    "#FF7F00", #reg warm
+                                    "#984EA3", #reg cool
+                                    "#4DAF4A", #unreg cool
+                                    "#377EB8" #stable cold
+                        )))
+
+# check
+ggclust2_k5 + theme_classic() +
+  scale_fill_manual("Thermal \nClasses", values=thermCols$color)+
+  scale_color_manual("Thermal \nClasses", values=thermCols$color)+
+  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8))+
+  labs(title = "Clusters for CA Thermal Regimes (k=5)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = "")))
+
+ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=300, )
 
 # HCLUST: Stats  -----------------------------------------------------------
 
@@ -97,6 +101,7 @@ cboot5 <- clusterboot(data = d1,
                       clustermethod = hclustCBI,
                       method="ward.D2", 
                       k=k_try,
+                      seed = 1234,
                       B = 1000 # number of resamples/bootstraps
 )
 
@@ -108,110 +113,8 @@ cboot5$bootmean # cluster stabilities (Jaccard Scores)
 # get a ton of stats based on the cluster groups
 cluster.stats(d1, clustering = cboot5_grps)
 
+# Selecting K -------------------------------------------------------------
 
-# calculating the Calinski-Harabasz Index
-
-# custom functions adopted from here:https://github.com/ethen8181/machine-learning/blob/master/clustering_old/clustering/clustering_functions.R, and following Zumel and Mount (2014)
-
-# calculate distances
-Distance <- function(cluster)
-{
-  # the center of the cluster, mean of all the points
-  center <- colMeans(cluster)
-  
-  # calculate the summed squared error between every point and 
-  # the center of that cluster 
-  distance <- apply( cluster, 1, function(row)
-  {
-    sum( ( row - center )^2 )
-  }) %>% sum()
-  
-  return(distance)
-}
-
-# function to calc total within SS (measure of each point to centroid of cluster)
-WSS <- function( data, groups ) 
-{
-  k <- max(groups)
-  
-  # loop through each groups (clusters) and obtain its 
-  # within sum squared error 
-  total <- lapply( 1:k, function(k)
-  {
-    # extract the data point within the cluster
-    cluster <- subset( data, groups == k )
-    
-    distance <- Distance(cluster)
-    return(distance)
-  }) %>% unlist()
-  
-  return( sum(total) )
-}
-
-# using above, add ability to calculate the CH Index
-CHCriterion <- function( data, kmax, clustermethod, ...  )
-{
-  if( !clustermethod %in% c( "kmeanspp", "hclust" ) )
-    stop( "method must be one of 'kmeanspp' or 'hclust'" )
-  
-  # total sum squared error (independent with the number of cluster k)
-  tss <- Distance( cluster = data )
-  
-  # initialize a numeric vector storing the score
-  wss <- numeric(kmax)
-  
-  # k starts from 2, cluster 1 is meaningless
-  if( clustermethod == "kmeanspp" )
-  {
-    for( k in 2:kmax )
-    {
-      results <- Kmeanspp( data, k, ... )
-      wss[k]  <- results$tot.withinss 
-    }		
-  }else # "hclust"
-  {
-    d <- dist( data, method = "euclidean" )
-    clustering <- hclust( d, ... )
-    for( k in 2:kmax )
-    {
-      groups <- cutree( clustering, k )
-      wss[k] <- WSS( data = data, groups =  groups )
-    }
-  }		
-  
-  # between sum of square
-  bss <- tss - wss[-1]
-  
-  # cluster count start from 2! 
-  numerator <- bss / ( 1:(kmax-1) )
-  denominator <- wss[-1] / ( nrow(data) - 2:kmax )
-  
-  criteria <- data.frame( k = 2:kmax,
-                          CHIndex = numerator / denominator,
-                          wss = wss[-1] )
-  
-  # convert to long format for plotting 
-  criteria_long <- gather( criteria, "index", "value", -1 )
-  
-  plot <- ggplot( criteria_long, aes( k, value, color = index ) ) + 
-    geom_line() + geom_point( aes( shape = index ), size = 3 ) +
-    facet_wrap( ~ index, scale = "free_y" ) + 
-    guides( color = FALSE, shape = FALSE )
-  
-  return( list( data = criteria, 
-                plot = plot ) )
-}
-
-
-# APPLY to our Data using the ward method
-kcriteria <- CHCriterion(data = ann_metrics_s, kmax=8,
-                         clustermethod = "hclust", method="ward.D2")
-
-kcriteria$data
-kcriteria$plot
-
-
-# Alternative?? -----------------------------------------------------------
 
 # nice overview here: https://bradleyboehmke.github.io/HOML/hierarchical.html#determining-optimal-clusters
 
