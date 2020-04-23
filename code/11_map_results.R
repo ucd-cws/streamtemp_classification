@@ -26,6 +26,9 @@ sites <- all_sites %>%
   filter(grepl("QA complete", notes)) %>% 
   rename(station_id = site_id)
 
+# get rivers
+load("output/12_selected_nhd_mainstems_for_gages.rda")
+
 # Add K_group Data --------------------------------------------------------
 
 # different classification grouping method
@@ -46,9 +49,9 @@ data_k <- left_join(agnes_k_groups, sites)
 
 # thermColor scale
 thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
-                        k5_names  = c("stable warm", "reg warm",
-                                      "reg cool", "unreg cool",
-                                      "stable cold"),
+                        k5_names  = c("1-stable warm", "2-reg warm",
+                                      "3-reg cool", "4-unreg cool",
+                                      "5-stable cold"),
                         color = I(c("#E41A1C", #stable warm
                                     "#FF7F00", #reg warm
                                     "#984EA3", #reg cool
@@ -57,16 +60,16 @@ thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
                         )))
 
 data_k <- data_k %>% 
-  mutate(k_5=factor(k_5,
-                    labels = c("stable warm","unreg cool",
-                               "reg warm", "reg cool",
-                               "stable cold"
-                               )))
+  mutate(k_5_f=factor(k_5,levels = c(1,3,4,2,5),
+                    labels = c("1-stable warm","2-reg warm","3-reg cool",
+                               "4-unreg cool", "5-stable cold"
+                               ))) %>% 
+  select(station_id, k_5, k_5_f, k_6:operator)
 
 
 # how many per group?
-table(data_k$k_3)
 table(data_k$k_5)
+table(data_k$k_5_f)
 
 # Thermal Classifications
 # 
@@ -85,7 +88,7 @@ data_k_sf <- data_k %>%
 dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
 
 # save out data for future mapping
-save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
+#save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -103,12 +106,16 @@ mapviewOptions(basemaps=mapbases)
 # m3@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # map k5
-m5 <- mapview(dams_nearest, col.regions="black", alpha.regions=0.8,
-                layer.name="Dams", cex=2,
+m5 <- mapview(dams_nearest, col.regions="black",
+                layer.name="Selected Dams", cex=6,
                 hide=TRUE, homebutton=FALSE)+
-  mapview(data_k_sf,  zcol="k_5", map.types=mapbases,
+  mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
+  mapview(mainstems_all, color="steelblue", cex=3, 
+          layer.name="NHD Flowlines") +
+  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+          layer.name="Thermal Classes",
           col.regions=unique(thermCols$color), 
-          alpha.regions=0.8, 
+          alpha.regions=0.8, cex=7,
           hide=FALSE, homebutton=FALSE) 
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
