@@ -42,33 +42,22 @@ dams_selected <- readRDS("output/12_selected_dam_comids.rds")
 # "unreg cool"= 2, 
 # "stable cold"= 5
 
-# rearrange levels to match color palette:
-data_k_sf <- data_k_sf %>% 
-  mutate(k_5 = forcats::fct_relevel(k_5, "stable warm", "reg warm", "reg cool", "unreg cool", "stable cold"))
-
-levels(data_k_sf$k_5)
-
 # * Make Custom Color Palette ----------------------------------------------
 
 # assign color palette based on classifications:
-# thermCol1 <- RColorBrewer::brewer.pal(nlevels(data_k_sf$k_5), name="Set1")
+thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
+                        k5_names  = c("1-stable warm", "2-reg warm",
+                                      "3-reg cool", "4-unreg cool",
+                                      "5-stable cold"),
+                        color = I(c("#E41A1C", #stable warm
+                                    "#FF7F00", #reg warm
+                                    "#984EA3", #reg cool
+                                    "#4DAF4A", #unreg cool
+                                    "#377EB8" #stable cold
+                        )))
 
-# make a custom set of colors in a dataframe
-thermCols <- with(data_k_sf, 
-                  data.frame(k_5 = levels(k_5),
-                             color = I(c("#E41A1C", #stable warm
-                                         "#FF7F00", #reg warm
-                                         "#984EA3", #reg cool
-                                         "#4DAF4A", #unreg cool
-                                         "#377EB8" #stable cold
-                                       ))))
-thermCols
-
-# use "match" to match colors
-#thermCols$color[match(data_k_sf$k_5, thermCols$k_5)]
-
-# or use "merge" to add to existing dataframe
-data_k_sf <- merge(data_k_sf, thermCols)
+# join w colors
+data_k_sf <- left_join(data_k_sf, thermCols, by=c("k_5"="k5_group_id"))
 
 # * Static Plot --------------------------------------------------------------------
 # using basemap options
@@ -80,7 +69,7 @@ plot(USAboundaries::us_boundaries(type="state", states="ca")$geometry, lwd=2, ad
 plot(data_k_sf$geometry, pch=21, 
      bg=data_k_sf$color, add=T)
 legend(x = 'bottomright', 
-       legend = as.character(thermCols$k_5),
+       legend = as.character(thermCols$k5_names),
        col = thermCols$color,
        pch = 16, bty = 'n', xjust = 1)
 
@@ -269,14 +258,14 @@ save(data_k_sf, file = "output/models/agnes_k_groups_w_selected_dams_v2.rda")
 
 # map it!
 m5 <- mapview(dams_nearest, col.regions="black", color="gray50",
-              alpha.regions=0.8,
-              layer.name="Dams", cex=2,
-              hide=TRUE, homebutton=FALSE)+
-  mapview(data_k_sf, zcol="k_5", map.types=mapbases,
-          col.regions=unique(data_k_sf$color), 
-          alpha.regions=0.8, 
-          hide=FALSE, homebutton=FALSE) +
-  mapview(mainstems_all, zcol="from_gage", lwd=2)
+              alpha.regions=0.8, layer.name="Nearest Dams", 
+              cex=6, homebutton=FALSE) +
+  mapview(dams, col.regions="gray50", alpha.regions=0.5, 
+          cex=3.4, layer.name="All Dams", homebutton=FALSE) +
+  mapview(data_k_sf, zcol="k_5_f", col.regions=unique(thermCols$color),
+          alpha.regions=0.8, homebutton=FALSE, layer.name="Thermal Classes") +
+  mapview(mainstems_all, color="steelblue", lwd=2.2, 
+          layer.name="NHD Flowlines", legend=FALSE)
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
