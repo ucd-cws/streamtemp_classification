@@ -91,8 +91,12 @@ dams <- dams[ca,] # now clip (spatial join to only ca)
 # get nearest dams
 dams_nearest <- dams[st_nearest_feature(data_k_sf, dams),]
 
+#filter dams that are irrelevant to the stream segment
+dams_nearest_filtered <- dams_nearest %>% 
+  filter(!OBJECTID %in% c(656, 613, 733, 655, 689, 739, 715, 589, 719, 218, 543, 670, 71, 665, 792, 213, 692, 199, 133, 731, 684, 761, 833, 676))
+
 # save out data for future mapping
-save(dams, dams_nearest, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
+save(dams, dams_nearest_filtered, data_k_sf, file = "output/models/agnes_k_groups_sf_w_dams.rda")
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -110,7 +114,7 @@ mapviewOptions(basemaps=mapbases)
 # m3@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # map k5
-m5 <- mapview(dams_nearest, col.regions="black",
+m5 <- mapview(dams_nearest_filtered, col.regions="black",
                 layer.name="Selected Dams", cex=6,
                 hide=TRUE, homebutton=FALSE)+
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
