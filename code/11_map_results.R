@@ -13,6 +13,11 @@ library(ggthemes)
 library(ggrepel)
 library(ggspatial)
 
+#added these packages to interactively select dams:
+library(mapedit)
+library(leaflet)
+library(leafpm)
+
 # Load data ---------------------------------------------------------------
 
 hydro_regions <- read_sf("data/shps//DWR_HydrologicRegions-utm11.shp") %>%
