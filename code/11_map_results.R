@@ -134,6 +134,50 @@ m5 <- mapview(dams_nearest_filtered, col.regions="black",
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 
+# Select dams to add to dams_nearest_filtered (manually with mapedit) -------------
+
+dams_selected = selectFeatures(dams, map = m5)
+
+dams_nearest_all <- rbind(dams_nearest_filtered, dams_selected)
+
+#Review selected dams
+m5 <- mapview(dams_nearest_all, col.regions="black",
+              layer.name="Selected Dams", cex=6,
+              hide=TRUE, homebutton=FALSE)+
+  mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
+  mapview(mainstems_all, color="steelblue", cex=3, 
+          layer.name="NHD Flowlines") +
+  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+          layer.name="Thermal Classes",
+          col.regions=unique(thermCols$color), 
+          alpha.regions=0.8, cex=7,
+          hide=FALSE, homebutton=FALSE) 
+
+m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+
+#filter out downstream or unrelated dams
+dams_nearest_all_filtered <- dams_nearest_all %>% 
+  filter(!OBJECTID %in% c(98, 837, 868, 96, 592, 5))
+
+#update map
+m6 <- mapview(dams_nearest_all_filtered, col.regions="black",
+              layer.name="Selected Dams", cex=6,
+              hide=TRUE, homebutton=FALSE)+
+  #mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
+  mapview(mainstems_all, color="steelblue", cex=3, 
+          layer.name="NHD Flowlines") +
+  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+          layer.name="Thermal Classes",
+          col.regions=unique(thermCols$color), 
+          alpha.regions=0.8, cex=7,
+          hide=FALSE, homebutton=FALSE) 
+
+m6@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+
+#Add Big Springs Dam
+Big_Springs_Dam = editMap(m6)
+
+Big_Springs_Dam #how to add this point to the list of dams?
 
 # Static map for k5 --------------------------------------------------------------
 
