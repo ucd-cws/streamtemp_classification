@@ -136,12 +136,12 @@ m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # Select dams to add to dams_nearest_filtered (manually with mapedit) -------------
 
-#dams_selected = selectFeatures(dams, map = m5) #Commented out once features were selected to preserve object
+dams_selected = selectFeatures(dams, map = m5) #Commented out once features were selected to preserve object
 
 dams_nearest_all <- rbind(dams_nearest_filtered, dams_selected)
 
 #Review selected dams
-m5 <- mapview(dams_nearest_all, col.regions="black",
+m6 <- mapview(dams_nearest_all, col.regions="black",
               layer.name="Selected Dams", cex=6,
               hide=TRUE, homebutton=FALSE)+
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
@@ -153,14 +153,61 @@ m5 <- mapview(dams_nearest_all, col.regions="black",
           alpha.regions=0.8, cex=7,
           hide=FALSE, homebutton=FALSE) 
 
-m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+m6@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 #filter out downstream or unrelated dams
 dams_nearest_all_filtered <- dams_nearest_all %>% 
-  filter(!OBJECTID %in% c(98, 837, 868, 96, 592, 5))
+  filter(!OBJECTID %in% c(98, 837, 868, 96, 592, 5, 720))
 
 #update map
-m6 <- mapview(dams_nearest_all_filtered, col.regions="black",
+m7 <- mapview(dams_nearest_all_filtered, col.regions="black",
+              layer.name="Selected Dams", cex=6,
+              hide=TRUE, homebutton=FALSE)+
+  mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
+  mapview(mainstems_all, color="steelblue", cex=3, 
+          layer.name="NHD Flowlines") +
+  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+          layer.name="Thermal Classes",
+          col.regions=unique(thermCols$color), 
+          alpha.regions=0.8, cex=7,
+          hide=FALSE, homebutton=FALSE) 
+
+m7@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+
+#Add New Melones
+New_Melones = selectFeatures(dams, map = m7)
+
+dams_nearest_all_filtered <-  rbind(dams_nearest_all_filtered, New_Melones)
+
+#Add Big Springs Dam
+Big_Springs_Dam = editMap(m7)
+
+Big_Springs_Dam
+
+Big_Springs_Dam_object <- Big_Springs_Dam$finished
+
+Big_Springs_Dam_sf <- Big_Springs_Dam_object %>% 
+  select(geometry) %>% 
+  mutate(NAME = "Big Springs Dam", COUNTY = "Siskiyou", RIVER = "Big Springs Creek", OBJECTID = "NA", NID = "NA", HEIGHT_FT = "NA", STOR_AF = "NA", BASIN_SQMI = "NA", STO_m3 = "NA", STO_10_6m3 = "NA", NEAR_FID = "NA", NEAR_DIST = "NA", damname = "NA", damheight = "NA", nidstorage = "NA", file_nbr = "NA", basin_nbr = "NA", location = "NA", latitude = "NA", longitude = "NA", inspdate = "NA")
+
+Big_Springs_Dam_sf <- Big_Springs_Dam_sf %>% 
+  select(OBJECTID, NID, NAME, COUNTY, RIVER, HEIGHT_FT, STOR_AF, BASIN_SQMI, STO_m3, STO_10_6m3, NEAR_FID, NEAR_DIST, damname, damheight, nidstorage, file_nbr, basin_nbr, location, latitude, longitude,inspdate, geometry)
+
+# Save final dams list ----------------------------------------------------
+
+
+# save out data for future mapping
+save(dams_nearest_all_filtered, file = "output/models/dams_nearest_all_filtered.rda")
+save(Big_Springs_Dam_sf, file = "output/models/Big_Springs_Dam.rda")
+
+#Try to combine dams_nearest_all_filtered and Big_Springs_Dam_sf
+dams_nearest_all_final <- rbind(dams_nearest_all_filtered, Big_Springs_Dam_sf)
+
+save(dams_nearest_all_final, file = "output/models/agnes_k_groups_sf_w_dams.rda")
+
+#Plot and review - 
+
+m8 <- mapview(dams_nearest_all_final, col.regions="black",
               layer.name="Selected Dams", cex=6,
               hide=TRUE, homebutton=FALSE)+
   #mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
@@ -172,12 +219,9 @@ m6 <- mapview(dams_nearest_all_filtered, col.regions="black",
           alpha.regions=0.8, cex=7,
           hide=FALSE, homebutton=FALSE) 
 
-m6@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+m8@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
-#Add Big Springs Dam
-#Big_Springs_Dam = editMap(m6)
 
-Big_Springs_Dam #how to add this point to the list of dams?
 
 # Static map for k5 --------------------------------------------------------------
 
