@@ -136,7 +136,7 @@ m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # Select dams to add to dams_nearest_filtered (manually with mapedit) -------------
 
-dams_selected = selectFeatures(dams, map = m5)
+#dams_selected = selectFeatures(dams, map = m5) #Commented out once features were selected to preserve object
 
 dams_nearest_all <- rbind(dams_nearest_filtered, dams_selected)
 
@@ -175,7 +175,7 @@ m6 <- mapview(dams_nearest_all_filtered, col.regions="black",
 m6@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 #Add Big Springs Dam
-Big_Springs_Dam = editMap(m6)
+#Big_Springs_Dam = editMap(m6)
 
 Big_Springs_Dam #how to add this point to the list of dams?
 
