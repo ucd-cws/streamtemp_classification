@@ -40,12 +40,12 @@ load("output/12_selected_nhd_mainstems_for_gages.rda")
 # Add K_group Data --------------------------------------------------------
 
 # different classification grouping method
-load("output/models/agnes_k_groups_final.rda") # agnes
+load("output/models/10a_agnes_k_groups_final.rda") # agnes
 agnes_k_groups <- agnes_k_groups %>% 
   rename(station_id = site_id)
 
 
-load("output/models/classification_group_results.rda") # class_groups
+load("output/models/10a_classification_group_results.rda") # class_groups
 unique(agnes_k_groups$station_id)
 
 # find differences between lists:
@@ -84,9 +84,7 @@ table(data_k$k5_names)
 # Add Centroid Distance Data -------------------------------------------------
 
 # add the centroid dist data:
-load("output/models/dist_to_centroids_class2_4.rda")
-class_cent_df <- class_cent_df %>% mutate(station_id = as.character(name)) %>% 
-  select(-name)
+load("output/models/10b_dist_to_centroids_class2_4.rda")
 
 # now join with full data set
 data_k <- left_join(data_k, class_cent_df)
@@ -96,7 +94,7 @@ data_k_sf <- data_k %>%
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
 ## SAVE?
-save(data_k_sf, file = "output/models/11_agnes_k_5_final_w_centdist.rda")
+save(data_k_sf, file = "output/models/11a_agnes_k_5_final_w_centdist.rda")
 
 # clean up
 rm(sites, all_sites, cboot5_df, agnes_k_groups, data_k)
@@ -116,7 +114,7 @@ dams_nearest_filtered <- dams_nearest %>%
   filter(!OBJECTID %in% c(656, 613, 733, 655, 689, 739, 715, 589, 719, 218, 543, 670, 71, 665, 792, 213, 692, 199, 133, 731, 684, 761, 833, 676))
 
 # save out data for future mapping
-save(dams, dams_nearest_filtered, file = "output/models/11_ca_dams_nearest_k_sites.rda")
+save(dams, dams_nearest_filtered, file = "output/models/11a_ca_dams_nearest_k_sites.rda")
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -153,7 +151,7 @@ m5b <- mapview(dams_nearest_all, col.regions="black",
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
   mapview(mainstems_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
-  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+  mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
           col.regions=unique(thermCols$color), 
           alpha.regions=0.8, cex=7,
@@ -172,7 +170,7 @@ m5c <- mapview(dams_nearest_all_filtered, col.regions="black",
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
   mapview(mainstems_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
-  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+  mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
           col.regions=unique(thermCols$color), 
           alpha.regions=0.8, cex=7,
@@ -201,13 +199,13 @@ Big_Springs_Dam_sf <- Big_Springs_Dam_sf %>%
 
 
 # save out data for future mapping
-save(dams_nearest_all_filtered, file = "output/models/11_dams_nearest_all_filtered.rda")
-save(Big_Springs_Dam_sf, file = "output/models/11_Big_Springs_Dam.rda")
+save(dams_nearest_all_filtered, file = "output/models/11a_dams_nearest_all_filtered.rda")
+save(Big_Springs_Dam_sf, file = "output/models/11a_Big_Springs_Dam.rda")
 
 #Try to combine dams_nearest_all_filtered and Big_Springs_Dam_sf
 dams_nearest_all_final <- rbind(dams_nearest_all_filtered, Big_Springs_Dam_sf)
 
-save(dams_nearest_all_final, file = "output/models/11_dams_nearest_all_final.rda")
+save(dams_nearest_all_final, file = "output/models/11a_dams_nearest_all_final.rda")
 
 #Plot and review - 
 
@@ -231,6 +229,7 @@ m5d@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 ggplot()+
   geom_sf(data = hydro_regions, fill = NA, color = 'slategray4', size = 1, alpha = 0.4) +
   geom_sf(data = data_k_sf, aes(fill = k5_names), pch = 21, size = 3) +
+  geom_sf(data= dams_nearest_all_final, fill="black", color="gray50", pch=24, size=2, alpha=0.75)+
   scale_fill_manual("Thermal Class", values = thermCols$color)+
   geom_sf_text(data = hydro_regions, aes(label = HR_NAME), check_overlap = TRUE, color="black") +
   annotation_north_arrow(location = "tr", pad_y = unit(0.1, "cm"), ) +
@@ -240,4 +239,3 @@ ggplot()+
   #hrbrthemes::theme_modern_rc(grid = FALSE) +
   theme(panel.background = element_blank(),
         legend.key = element_rect(fill="transparent"))
-  #theme_classic(base_family = "Roboto Condensed")
