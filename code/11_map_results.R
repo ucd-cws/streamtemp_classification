@@ -58,9 +58,9 @@ thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
                                       "3-reg cool", "4-unreg cool",
                                       "5-stable cold"),
                         color = I(c("#E41A1C", #stable warm
-                                    "#FF7F00", #reg warm
-                                    "#984EA3", #reg cool
-                                    "#4DAF4A", #unreg cool
+                                    "#FF7F00", #variable warm
+                                    "#984EA3", #stable cool
+                                    "#4DAF4A", #variable cool
                                     "#377EB8" #stable cold
                         )))
 

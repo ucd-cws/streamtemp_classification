@@ -11,7 +11,8 @@ library(ggthemes)
 library(ggrepel)
 library(ggspatial)
 library(nhdplusTools)
-#library(wateRshedTools)
+library(wateRshedTools)
+library(hrbrthemes)
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -23,7 +24,23 @@ mapviewOptions(basemaps=mapbases)
 # LOAD DATA ---------------------------------------------------------------
 
 # clustering data and dams
-load("output/models/agnes_k_groups_sf_w_dams.rda")
+load("output/models/agnes_k_groups_w_selected_dams.rda") # data_k_sf
+
+# update/drop some cols
+data_k_sf <- data_k_sf %>% 
+  mutate(k_5_integer = as.integer(k_5)) %>% 
+  select(-c(k_3, k_6, reviewer, completed_Y_N, notes, dist_to_dam_m, dist_to_dam_km, color)) %>% 
+  select(k_5, k_5_integer, station_id:geometry)
+
+dams_final <- readr::read_rds(path = "output/models/dams_final_selected_sf.rds")
+
+# fix duplicates
+dams_final <- dams_final %>% 
+  distinct(.keep_all = TRUE) %>% # drops to 27 total dams
+  select(-c(damname:inspdate)) %>% # drop empty cols
+  mutate(lon = st_coordinates(.)[,1],
+         lat = st_coordinates(.)[,2])
+  
 
 # LOAD INTERMEDIATE DATA FILES --------------------------------------------------
 
@@ -33,19 +50,10 @@ load("output/12_selected_nhd_mainstems_for_gages.rda")
 usgs_segs <- readRDS("output/12_selected_gage_comids.rds")
 dams_selected <- readRDS("output/12_selected_dam_comids.rds")
 
-# * Reorder Thermal k=5 Classifications -------------------------------------------------
-
-# Thermal Classifications
-# "stable warm" = 1
-# "reg warm"= 3, 
-# "reg cool" = 4,
-# "unreg cool"= 2, 
-# "stable cold"= 5
-
 # * Make Custom Color Palette ----------------------------------------------
 
 # assign color palette based on classifications:
-thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
+thermCols <- data.frame(k5_group_id = c(1:5),
                         k5_names  = c("1-stable warm", "2-reg warm",
                                       "3-reg cool", "4-unreg cool",
                                       "5-stable cold"),
@@ -57,10 +65,10 @@ thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
                         )))
 
 # join w colors
-data_k_sf <- left_join(data_k_sf, thermCols, by=c("k_5"="k5_group_id"))
+data_k_sf <- left_join(data_k_sf, thermCols, by=c("k_5_integer"="k5_group_id")) %>% 
+  st_transform(4326)
 
 # * Static Plot --------------------------------------------------------------------
-# using basemap options
 
 # plot CA counties
 plot(USAboundaries::us_counties(resolution = "low", states="ca")$geometry, border = alpha("gray70", 0.8), lwd=0.9, lty=3)
@@ -73,7 +81,7 @@ legend(x = 'bottomright',
        col = thermCols$color,
        pch = 16, bty = 'n', xjust = 1)
 
-# 01: GET COMID FOR GAGES -----------------------------------------------------
+# 01A: GET COMID FOR GAGES -----------------------------------------------------
 
 # get the COMID for each gage in list using nhdplustools
 usgs_segs <- data_k_sf %>% 
@@ -90,11 +98,16 @@ usgs_segs %>%
 usgs_segs <- unlist(usgs_segs) %>% as_tibble(rownames = "station_id") %>% 
   rename(comid = value)
 
+# update one COMID for Oroville which seems to be not joining (or giving diff comid)
+#station_id=FRA, COMID=7969421
+# reassign to: COMID=7969423
+usgs_segs <- usgs_segs %>% mutate(comid = replace(comid, station_id=="FRA", 7969423))
+
 # save the USGS station COMIDs file:
 write_rds(usgs_segs, path="output/12_selected_gage_comids.rds")
 write_csv(usgs_segs, path="output/12_selected_gage_comids.csv")
 
-# 02: GET UPSTREAM FLOWLINES FROM GAGE ---------------------------------------------
+# 02A: GET UPSTREAM FLOWLINES FROM GAGE ---------------------------------------------
 
 # use the list of comids to pass to the nhdplusTools function
 coms_list <- map(usgs_segs$comid, ~list(featureSource = "comid", featureID=.x))
@@ -114,21 +127,18 @@ mainstems_flat_us <- mainstemsUS %>%
 mainstems_us <- do.call(what = sf:::rbind.sf,
                         args = mainstems_flat_us)
 
-# remove rownames
-rownames(mainstems_us) <- c()
-
 # add direction to gage col
 mainstems_us <- mainstems_us %>% 
   mutate(from_gage = "US")
 
 rm(mainstems_flat_us, mainstemsUS)
 
-# 03: GET DOWNSTREAM FLOWLINES FROM GAGE -----------------------------------------
+# 03A: GET DOWNSTREAM FLOWLINES FROM GAGE -----------------------------------------
 
-# get NHD segments downstream of selected USGS gages, 30 km buffer
+# get NHD segments downstream of selected USGS gages, 50 km buffer
 mainstemsDS <- map(coms_list, ~navigate_nldi(nldi_feature = .x,
                                              mode="downstreamMain",
-                                             distance_km = 30,
+                                             distance_km = 50,
                                              data_source = ""))
 
 # make a single flat layer
@@ -141,9 +151,6 @@ mainstems_flat_ds <- mainstemsDS %>%
 mainstems_ds <- do.call(what = sf:::rbind.sf,
                         args = mainstems_flat_ds)
 
-# remove weird rownames
-rownames(mainstems_ds) <- c()
-
 # add direction to gage col
 mainstems_ds <- mainstems_ds %>% 
   mutate(from_gage = "DS")
@@ -151,85 +158,166 @@ mainstems_ds <- mainstems_ds %>%
 rm(mainstems_flat_ds, mainstemsDS)
 
 # bind all mainstems
-mainstems_all <- rbind(mainstems_us, mainstems_ds)
+mainstems_gage_all <- rbind(mainstems_us, mainstems_ds)
 
 # quick check
-mapview(dams_nearest, col.regions="black", cex=2) + 
+mapview(dams_final, col.regions="black", cex=7) + 
   mapview(mainstems_us, color="darkblue", lwd=0.7) +
   mapview(mainstems_ds, color="purple", lwd=1.5) +
   mapview(data_k_sf, col.regions="orange", cex=4)
 
-# 04: COMBINE AND SAVE STREAMLINES ------------------------------------------
+# 01B: GET COMID FOR DAMS -----------------------------------------------------
 
-save(mainstems_all, file="output/12_selected_nhd_mainstems_for_gages.rda")
-
-save(mainstems_us, mainstems_ds, file = "output/12_selected_nhd_mainstems_for_gages_us_ds.rda")
-
-# to write out as a shapefile:
-#st_write(obj=mainstems_all, "output/12_selected_nhd_mainstems_for_gages.shp")
-
-# 05: GET COMID FOR DAMS  ----------------------------------------------------------
-
-# crop ALL dams layer to bounding box of our gage sites:
-# both sf objects need to be in same projection
-st_crs(dams) == st_crs(data_k_sf) # TRUE is GOOD
-
-# crop
-dams_crop <- st_crop(dams, st_bbox(data_k_sf))
-
-# preview
-#mapview(dams_crop, color="black",col.regions="gray", alpha.regions=0.8, cex=2) + 
-  #mapview(data_k_sf, col.regions="orange", color="orange4", cex=4)
-  
-## now use this set of dams to get COMIDs
-
-# get the COMID for each gage in list
-dam_coms <- dams_crop %>% 
-  split(.$NID) %>% # split by ID
-  # then apply this function to each split to get COMID
+# get the COMID for each gage in list using nhdplustools
+dam_segs <- dams_final %>% 
+  split(.$NAME) %>% # split by ID#
   map(~discover_nhdplus_id(.x$geometry))
 
-# check for dups
-dam_coms %>% 
-  purrr::map_lgl(~ length(.x)>1) %>% 
-  .[.==TRUE] 
+# now have a list of all COMIDs, check for duplicates
+dam_segs %>% 
+  purrr::map_lgl(~ length(.x)>1) %>% table() # all FALSE
+# to look for TRUE try this: .[.==TRUE] 
 
-# two dups: check and fix by picking first one
-dam_coms["CA00555"]
-dam_coms["CA00925"]
-
-# fix, just take the first comid 
-dam_coms["CA00555"] <- 8007593
-dam_coms["CA00925"] <- 7924053
-
-# double check again
-dam_coms %>% 
-  purrr::map_lgl(~ length(.x)>1) %>% table() # all
-
-# flatten list
-dam_coms <- unlist(dam_coms) %>% as_tibble(rownames = "NID") %>% 
+# to see as a dataframe:
+dam_segs <- unlist(dam_segs) %>% as_tibble(rownames = "dam_name") %>% 
   rename(comid = value)
 
-# rejoin with original dams list:
-dams_crop <- left_join(dams_crop, dam_coms) %>% 
-  select(comid, everything())
+# save the USGS station COMIDs file:
+write_rds(dam_segs, path="output/12_selected_dam_comids.rds")
+write_csv(dam_segs, path="output/12_selected_dam_comids.csv")
 
-# 06: SELECT NEAREST DAMS USING COMID ---------------------------------------
+# 02B: GET UPSTREAM FLOWLINES FROM DAMS ---------------------------------------------
+
+# use the list of comids to pass to the nhdplusTools function
+dams_list <- map(dam_segs$comid, ~list(featureSource = "comid", featureID=.x))
+
+# Get Upstream mainstem segs, this can take a minute
+dmainstemsUS <- map(dams_list, ~navigate_nldi(nldi_feature = .x,
+                                             mode="upstreamMain",
+                                             #distance_km = 10,
+                                             data_source = ""))
+
+# make a single flat layer
+dmainstems_flat_us <- dmainstemsUS %>%
+  set_names(., dam_segs$dam_name) %>%
+  map2(dam_segs$dam_name, ~mutate(.x, dam_name=.y))
+
+# bind together
+dmainstems_us <- do.call(what = sf:::rbind.sf,
+                        args = dmainstems_flat_us)
+
+# add direction to gage col
+dmainstems_us <- dmainstems_us %>% 
+  mutate(from_dam = "US")
+
+rm(dmainstems_flat_us, dmainstemsUS)
+
+# 03B: GET DOWNSTREAM FLOWLINES FROM DAMS -----------------------------------------
+
+# get NHD segments downstream of selected USGS gages, 100 km buffer
+dmainstemsDS <- map(dams_list, ~navigate_nldi(nldi_feature = .x,
+                                             mode="downstreamMain",
+                                             distance_km = 100,
+                                             data_source = ""))
+
+# make a single flat layer
+dmainstems_flat_ds <- dmainstemsDS %>%
+  set_names(., dam_segs$dam_name) %>%
+  map2(dam_segs$dam_name, ~mutate(.x, dam_name=.y))
+
+
+# bind together
+dmainstems_ds <- do.call(what = sf:::rbind.sf,
+                        args = dmainstems_flat_ds)
+
+# add direction to gage col
+dmainstems_ds <- dmainstems_ds %>% 
+  mutate(from_dam = "DS")
+
+rm(dmainstems_flat_ds, dmainstemsDS)
+
+# bind all mainstems
+mainstems_dam_all <- rbind(dmainstems_us, dmainstems_ds)
+
+# quick check
+mapview(dams_final, col.regions="black", cex=7) + 
+  mapview(dmainstems_us, color="darkblue", lwd=0.7) +
+  mapview(dmainstems_ds, color="purple", lwd=1.5) +
+  mapview(data_k_sf, col.regions="orange", cex=4)
+
+
+# 04: COMBINE AND SAVE GAGE/DAM STREAMLINES ------------------------------------------
+
+save(mainstems_dam_all,mainstems_gage_all, file="output/12_selected_nhd_mainstems.rda")
+save(mainstems_us, mainstems_ds, dmainstems_us, dmainstems_ds, file = "output/12_selected_nhd_mainstems_us_ds.rda")
+
+# to write out as a shapefile:
+#st_write(obj=mainstems_dams_all, "output/12_selected_nhd_mainstems_dams.shp")
+
+# 05: SELECT NEAREST DAMS USING COMID ---------------------------------------
 
 ## search for dams nearest to a gage site that occur in same 
 # comid/nhdline mainstem list. 
 
-dams_selected <- dams_crop %>% filter(comid %in% mainstems_all$nhdplus_comid)
+# join comids with dams
+dams_final <- dams_final %>% left_join(., dam_segs, by=c("NAME"="dam_name"))
 
-# save selected dam_comids
-saveRDS(dams_selected, file = "output/12_selected_dam_comids.rds")
+# first join comids with gage
+data_k_sf <- data_k_sf %>% left_join(., usgs_segs)
 
-# can also select nearest dams with st_nearest:
-# BUT this will select the nearest dam for every single gage, even if not in same watershed (irrespective of watersheds or distance)
+# now select the mainstem dam comids that are in the list of gage_comids
+k_coms_selected <- data_k_sf  %>% filter(comid %in% dmainstems_ds$nhdplus_comid)
 
 # use this after selecting dams (to keep in same drainage), to figure out distances
-dams_nearest <- dams_selected[st_nearest_feature(data_k_sf, dams_selected),]
+#dams_nearest <- dams_final[st_nearest_feature(k_coms_selected, dams_final),]
 
+# quick map
+mapview(dams_final, col.region="black", cex=6) + 
+  mapview(k_coms_selected, col.region="yellow", cex=3) +
+  #mapview(data_k_sf, col.region="orange", cex=3) +
+  mapview(dmainstems_ds, color="purple", lwd=1.5)
+
+
+# 06. SNAP POINTS TO LINES ----------------------------------------------------
+
+dmainstems_ds <- dmainstems_ds %>% st_transform(3310)
+
+# can use st_nearest_points first, returns lines
+pts_near_mainstem <- st_nearest_points(k_coms_selected, dmainstems_ds)
+
+# function to snap points to lines using 1000 m buffer 
+# (adapted from SO and Tim Salabim: https://stackoverflow.com/questions/51292952/snap-a-point-to-the-closest-point-on-a-line-segment-using-sf )
+st_snap_points = function(x, y, namevar, max_dist = 1000) {
+  
+  if (inherits(x, "sf")) n = nrow(x)
+  if (inherits(x, "sfc")) n = length(x)
+  
+  out = do.call(c,
+                lapply(seq(n), function(i) {
+                  nrst = st_nearest_points(st_geometry(x)[i], y)
+                  nrst_len = st_length(nrst)
+                  nrst_mn = which.min(nrst_len)
+                  if (as.vector(nrst_len[nrst_mn]) > max_dist) return(st_geometry(x)[i])
+                  return(st_cast(nrst[nrst_mn], "POINT")[2])
+                })
+  )
+  out_xy <- st_coordinates(out) %>% as.data.frame()
+  out_xy <- out_xy %>% 
+    mutate({{namevar}} := x[[namevar]]) %>% 
+    st_as_sf(coords=c("X","Y"), crs=st_crs(x), remove=FALSE)
+  
+  return(out_xy)
+}
+
+# now snap points to the lines
+pts_sel <- st_snap_points(k_coms_selected, dmainstems_ds, namevar = "station_id", max_dist = 1000)
+
+
+# check it out!
+mapview(pts_sel, col.regions="yellow") + 
+  mapview(dams_final, col.region="black", cex=6) + 
+  mapview(data_k_sf, col.region="orange", cex=3) +
+  mapview(dmainstems_ds, color="purple", lwd=1.5)
 
 # 07: GET DISTANCE TO NEAREST DAM -----------------------------------------
 

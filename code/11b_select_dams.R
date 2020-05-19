@@ -140,7 +140,7 @@ rm(big_springs_abb, Big_Springs_Dam_sf, dams_nearest_all_filtered)
 # Save final dams list ----------------------------------------------------
 
 # using rds here to keep this as a single file
-#write_rds(x = dams_nearest_final, path = "output/models/dams_final_selected_sf.rds")
+write_rds(x = dams_nearest_final, path = "output/models/dams_final_selected_sf.rds")
 
 
 # Static map for k5 --------------------------------------------------------------
