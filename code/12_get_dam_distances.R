@@ -319,6 +319,10 @@ mapview(pts_sel, col.regions="yellow") +
   mapview(data_k_sf, col.region="orange", cex=3) +
   mapview(dmainstems_ds, color="purple", lwd=1.5)
 
+## LEFT OFF HERE
+save(k_coms_selected, data_k_sf, dams_final, dam_segs, usgs_segs, file = "output/temp_dams_k_selected_data.rda")
+
+
 # 07: GET DISTANCE TO NEAREST DAM -----------------------------------------
 
 # need to make sure this is in same CRS...

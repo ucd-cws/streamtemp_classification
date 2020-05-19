@@ -15,7 +15,7 @@ library(ggspatial)
 # Load data ---------------------------------------------------------------
 
 # the k groups data 
-load("output/models/agnes_k_groups_w_selected_dams.rda") # data_k_sf
+load("output/models/11_agnes_k_5_final_w_centdist.rda") # data_k_sf
 
 # the selected dams data
 load("output/models/Big_Springs_Dam.rda")
@@ -33,40 +33,8 @@ ca_co <- USAboundaries::us_counties(states = "ca", resolution = "low")
 dams <- dams[ca,] # now clip (spatial join to only ca)
 
 
-# ? This needs to be deleted
-#load("output/models/agnes_k_groups_sf_w_dams.rda")
-
-
-# Tidy some data ----------------------------------------------------------
-
-data_k_sf <- data_k_sf %>% 
-  mutate(k_5_f=recode_factor(k_5, 
-                             `stable warm`="1-stable warm",
-                             `reg warm`="2-reg warm",
-                             `reg cool`="3-reg cool",
-                             `unreg cool`="4-unreg cool", 
-                             `stable cold`="5-stable cold", 
-                             .default = levels(k_5))) %>%
-  dplyr::select(station_id, k_5, k_5_f, site_name:operator, color, geometry)
-
-
-# how many per group?
-table(data_k_sf$k_5)
-table(data_k_sf$k_5_f)
-
-# Thermal Classifications
-# "stable warm" = 1
-# "reg warm"= 3, 
-# "reg cool" = 4,
-# "unreg cool"= 2, 
-# "stable cold"= 5, 
-
-
-# Bind Dam layers together ------------------------------------------------
-
-# TWO OPTIONS FOR SF OBJECTS:
-
-# OPTION 1: fill the missing cols
+# Bind Dam Layers: OPTION 1 -----------------------------------------------
+# fill the missing cols
 
 # make a version with uneven cols?
 big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
@@ -80,7 +48,8 @@ big_springs_abb[add_cols] <- NA
 # then rbind
 dams_nearest_final <- rbind(dams_nearest_all_filtered, big_springs_abb)
 
-# OPTION 2: 
+
+# Bind Dam Layers: OPTION 2 -----------------------------------------------
 
 # use datatable package, make sure both are in same CRS/geometry
 
@@ -91,24 +60,10 @@ big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
 dams_nearest_final <- st_as_sf(data.table::rbindlist(
   list(dams_nearest_all_filtered, big_springs_abb), fill = TRUE))
 
-
 # check
 #mapview(dams_nearest_final)
 
 # make spatial bases ---------------------------------------------------------
-
-# set up colors
-thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
-                        k5_names  = c("1-stable warm", "2-reg warm",
-                                      "3-reg cool", "4-unreg cool",
-                                      "5-stable cold"),
-                        color = I(c("#E41A1C", #stable warm
-                                    "#FF7F00", #reg warm
-                                    "#984EA3", #reg cool
-                                    "#4DAF4A", #unreg cool
-                                    "#377EB8" #stable cold
-                        )))
-
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -123,14 +78,13 @@ m5 <- mapview(dams_nearest_final, col.regions="black",
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
   mapview(mainstems_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
-  mapview(data_k_sf,  zcol="k_5_f", map.types=mapbases,
+  mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
-          col.regions=thermCols$color, 
+          col.regions=unique(data_k_sf$color[order(data_k_sf$k5_names)]), 
           alpha.regions=0.8, cex=3.5,
           hide=FALSE, homebutton=FALSE) 
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
-
 
 
 # Cleanup -----------------------------------------------------------------
