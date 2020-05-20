@@ -15,11 +15,10 @@ library(ggspatial)
 # Load data ---------------------------------------------------------------
 
 # the k groups data 
-load("output/models/11_agnes_k_5_final_w_centdist.rda") # data_k_sf
+load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf
 
-# the selected dams data
-load("output/models/Big_Springs_Dam.rda")
-load("output/models/dams_nearest_all_filtered.rda")
+# the filtered dams data
+load("output/11a_dams_nearest_final.rda")
 
 # get rivers
 load("output/12_selected_nhd_mainstems_for_gages.rda")
@@ -31,37 +30,6 @@ dams <- read_sf("data/shps/CA_OR_dams.shp", quiet = F) %>% st_transform(4326)
 ca <- USAboundaries::us_boundaries(type="state", states="ca")
 ca_co <- USAboundaries::us_counties(states = "ca", resolution = "low")
 dams <- dams[ca,] # now clip (spatial join to only ca)
-
-
-# Bind Dam Layers: OPTION 1 -----------------------------------------------
-# fill the missing cols
-
-# make a version with uneven cols?
-big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
-
-# add missing coluns (pick the full dataset you want first)
-add_cols <- setdiff(names(dams_nearest_all_filtered), names(big_springs_abb))
-
-# now add these cols and fill with NA
-big_springs_abb[add_cols] <- NA
-
-# then rbind
-dams_nearest_final <- rbind(dams_nearest_all_filtered, big_springs_abb)
-
-
-# Bind Dam Layers: OPTION 2 -----------------------------------------------
-
-# use datatable package, make sure both are in same CRS/geometry
-
-# make abbreviated col version to test
-big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
-
-# try using datatable option:
-dams_nearest_final <- st_as_sf(data.table::rbindlist(
-  list(dams_nearest_all_filtered, big_springs_abb), fill = TRUE))
-
-# check
-#mapview(dams_nearest_final)
 
 # make spatial bases ---------------------------------------------------------
 
@@ -85,16 +53,6 @@ m5 <- mapview(dams_nearest_final, col.regions="black",
           hide=FALSE, homebutton=FALSE) 
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
-
-
-# Cleanup -----------------------------------------------------------------
-
-rm(big_springs_abb, Big_Springs_Dam_sf, dams_nearest_all_filtered)
-
-# Save final dams list ----------------------------------------------------
-
-# using rds here to keep this as a single file
-write_rds(x = dams_nearest_final, path = "output/models/dams_final_selected_sf.rds")
 
 
 # Static map for k5 --------------------------------------------------------------

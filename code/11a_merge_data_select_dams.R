@@ -20,7 +20,7 @@ library(leafpm)
 
 # Load data ---------------------------------------------------------------
 
-hydro_regions <- read_sf("data/shps//DWR_HydrologicRegions-utm11.shp") %>%
+hydro_regions <- read_sf("data/shps/DWR_HydrologicRegions-utm11.shp") %>%
   st_transform(4326) %>% 
   rmapshaper::ms_simplify(keep = .01) # simplify
 # check size
@@ -94,7 +94,7 @@ data_k_sf <- data_k %>%
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
 ## SAVE?
-save(data_k_sf, file = "output/models/11a_agnes_k_5_final_w_centdist.rda")
+save(data_k_sf, file = "output/11a_agnes_k_5_final_w_centdist.rda")
 
 # clean up
 rm(sites, all_sites, cboot5_df, agnes_k_groups, data_k)
@@ -114,7 +114,7 @@ dams_nearest_filtered <- dams_nearest %>%
   filter(!OBJECTID %in% c(656, 613, 733, 655, 689, 739, 715, 589, 719, 218, 543, 670, 71, 665, 792, 213, 692, 199, 133, 731, 684, 761, 833, 676))
 
 # save out data for future mapping
-save(dams, dams_nearest_filtered, file = "output/models/11a_ca_dams_nearest_k_sites.rda")
+save(dams, dams_nearest_filtered, file = "output/11a_ca_dams_nearest_k_sites.rda")
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
@@ -195,17 +195,44 @@ Big_Springs_Dam_sf <- Big_Springs_Dam_object %>%
 Big_Springs_Dam_sf <- Big_Springs_Dam_sf %>% 
   select(OBJECTID, NID, NAME, COUNTY, RIVER, HEIGHT_FT, STOR_AF, BASIN_SQMI, STO_m3, STO_10_6m3, NEAR_FID, NEAR_DIST, damname, damheight, nidstorage, file_nbr, basin_nbr, location, latitude, longitude,inspdate, geometry)
 
+
 # Save final dams list ----------------------------------------------------
 
-
 # save out data for future mapping
-save(dams_nearest_all_filtered, file = "output/models/11a_dams_nearest_all_filtered.rda")
-save(Big_Springs_Dam_sf, file = "output/models/11a_Big_Springs_Dam.rda")
+save(dams_nearest_all_filtered, file = "output/11a_dams_nearest_all_filtered.rda")
+save(Big_Springs_Dam_sf, file = "output/11a_Big_Springs_Dam.rda")
 
-#Try to combine dams_nearest_all_filtered and Big_Springs_Dam_sf
-dams_nearest_all_final <- rbind(dams_nearest_all_filtered, Big_Springs_Dam_sf)
 
-save(dams_nearest_all_final, file = "output/models/11a_dams_nearest_all_final.rda")
+# Binding SF Dataframes ---------------------------------------------------
+
+## OPTION 1:
+# fill the missing cols
+
+# # make a version with uneven cols?
+# big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
+# 
+# # add missing coluns (pick the full dataset you want first)
+# add_cols <- setdiff(names(dams_nearest_all_filtered), names(big_springs_abb))
+# 
+# # now add these cols and fill with NA
+# big_springs_abb[add_cols] <- NA
+# 
+# # then rbind
+# dams_nearest_all_final <- rbind(dams_nearest_all_filtered, big_springs_abb)
+
+## OPTION 2: 
+# use datatable package, make sure both are in same CRS/geometry
+
+# make abbreviated col version to test
+#big_springs_abb <- Big_Springs_Dam_sf %>% select(NAME:RIVER, geometry)
+
+# try using datatable option:
+# dams_nearest_final <- st_as_sf(data.table::rbindlist(
+#   list(dams_nearest_all_filtered, big_springs_abb), fill = TRUE))
+
+dams_nearest_final <- rbind(dams_nearest_all_filtered, Big_Springs_Dam_sf)
+
+save(dams_nearest_final, file = "output/11a_dams_nearest_all_final.rda")
 
 #Plot and review - 
 
