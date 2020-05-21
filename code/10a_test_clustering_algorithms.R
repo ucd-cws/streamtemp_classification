@@ -9,7 +9,7 @@ library(factoextra) # clustering visualization/stats
 
 # Load Data ---------------------------------------------------------------
 
-load("output/models/annual_cluster_metrics_all_gages.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 
 # CLUSTERING: Scale & Create Dist Matrix ------------------------------------------------
 
@@ -288,7 +288,7 @@ hc2_grps_k3 <- cutree(hc2, k=3) # try k=3
 
 # bind together and save
 agnes_k_groups <- tibble(site_id = ann_metrics$station_id, k_3=hc2_grps_k3, k_5=hc2_grps_k5, k_6=hc2_grps_k6)
-save(agnes_k_groups, file="output/models/agnes_k_groups_final.rda")
+save(agnes_k_groups, file="output/models/10a_agnes_k_groups_final.rda")
 
 # k=6
 ggclust2_k6 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k6))
@@ -313,6 +313,6 @@ ggsave("output/figures/pc_agnes_k3.png", width = 8, height = 6, units="in", dpi=
 # Save out Group Bootstrap k's --------------------------------------------
 
 # save # output/models/agnes_k_groups_final.rda
-write_csv(cboot5_df, path="output/models/classification_group_results.csv")
+write_csv(cboot5_df, path="output/models/10a_classification_group_results.csv")
 
-save(cboot5_df, file = "output/models/classification_group_results.rda")
+save(cboot5_df, file = "output/models/10a_classification_group_results.rda")

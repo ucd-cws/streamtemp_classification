@@ -15,8 +15,8 @@ library(ggplotify)
 
 # Figure 2a: the x-y plot of clustered thermal regimes --------------------
 
-load("output/models/annual_cluster_metrics_all_gages.rda")
-load("output/models/agnes_k_groups_final.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
+load("output/models/10a_agnes_k_groups_final.rda")
 
 # CLUSTERING: Scale & Create Dist Matrix ------------------------------------------------
 
@@ -63,21 +63,24 @@ ggclust2_k5 + theme_classic() +
 
 # thermColor scale
 thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
-                        k5_names  = c("stable warm", "reg warm",
-                                      "reg cool", "unreg cool",
+                        k5_names  = c("stable warm", "variable warm",
+                                      "stable cool", "variable cool",
                                       "stable cold"),
                         color = I(c("#E41A1C", #stable warm
-                                    "#FF7F00", #reg warm
-                                    "#984EA3", #reg cool
-                                    "#4DAF4A", #unreg cool
+                                    "#FF7F00", #variable warm
+                                    "#984EA3", #stable cool
+                                    "#4DAF4A", #variable cool
                                     "#377EB8" #stable cold
                         )))
 
 # check
 ggclust2_k5 + theme_classic() +
-  scale_fill_manual("Thermal \nClasses", values=thermCols$color)+
-  scale_color_manual("Thermal \nClasses", values=thermCols$color)+
-  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8))+
+  scale_fill_manual("Thermal \nClasses", values=thermCols$color, 
+                    labels=thermCols$k5_names)+
+  scale_color_manual("Thermal \nClasses", values=thermCols$color,
+                     labels=thermCols$k5_names)+
+  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8),
+                     labels=thermCols$k5_names)+
   labs(title = "Clusters for CA Thermal Regimes (k=5)") +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
@@ -174,14 +177,44 @@ class_4$dist_to_centroid <- sqrt((mean_x_2-class_4$x)^2 + (mean_y_2-class_4$y)^2
 class_4 <- class_4 %>% 
   arrange(desc(dist_to_centroid))
 
-## map?
+# bind together
+class_cent_df <- bind_rows(class_2, class_4) %>% 
+  rename(station_id=name)
+
+
+# Map Results -------------------------------------------------------------
+
+all_sites <- read_csv("data/data_review/gage_QA_progress.csv")
+
+sites <- all_sites %>% 
+  filter(grepl("QA complete", notes)) %>% 
+  rename(station_id = site_id)
+
+# join site data with groups
+data_k <- left_join(agnes_k_groups, sites, by=c("site_id"="station_id")) %>% 
+  rename(station_id=site_id) %>% 
+  # drop cols we don't need
+  select(station_id, k_5, site_name:operator)
+
+# make spatial
+data_k_sf <- data_k %>% 
+  st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
+
+# map
 library(sf)
-load("output/models/agnes_k_groups_v2_w_selected_dams.rda")
 
 # join w spatial data:
-class_cent_df <- bind_rows(class_2, class_4)
-data_sf <- left_join(data_k_sf_v2, class_cent_df[,c(1,5,6)], by=c("station_id"="name"))
+data_sf <- left_join(data_k_sf, class_cent_df[,c(1,5,6)], by=c("station_id"))
 
+# save out dist_to_centroids
+save(class_cent_df, file = "output/models/10b_dist_to_centroids_class2_4.rda")
+
+# hist of distances
+hist(class_cent_df$dist_to_centroid)
+
+# so majority are around 3-4
+
+# make map of sites less than 3
 library(mapview)
-mapview(data_sf, zcol="dist_to_centroid") + 
-  mapview(data_sf, zcol="k_5", col.regions=c("#E41A1C", "#FF7F00", "#984EA3", "#4DAF4A", "#377EB8"), legend=F)
+mapview(data_sf, zcol="k_5", col.regions=c("#E41A1C", "#FF7F00", "#984EA3", "#4DAF4A", "#377EB8"), legend=F, cex=4) +
+  mapview(data_sf %>% filter(dist_to_centroid <3), zcol="dist_to_centroid", cex="dist_to_centroid")
