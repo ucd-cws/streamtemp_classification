@@ -6,6 +6,7 @@
 
 # mapping
 library(sf)
+library(lwgeom)
 library(mapview)
 library(nhdplusTools)
 library(ggspatial)
@@ -527,26 +528,44 @@ gages_w_dist_filt <- gages_w_distances %>%
 data_k_dist <- data_k_sf %>% 
   left_join(., st_drop_geometry(gages_w_dist_filt), by="station_id")
 
-# mapview
-mfinal <- mapview(data_k_dist, zcol="k5_names",
-                  layer.name="Distance to Dam",
-                  legend=FALSE, cex="cum_len_km", basemaps=mapbases,
-                  col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)])) + 
+# save this out!
+save(data_k_dist, file = "output/12_data_k_centdist_damdist.rda")
+save(dams_final, ds_main_merged, file="output/12_dams_final_mainstems_merged.rda")
+
+# 09A. FINAL MAPVIEW MAP --------------------------------------------------
+
+load("output/12_data_k_centdist_damdist.rda")
+load("output/12_dams_final_mainstems_merged.rda")
+
+# mapview sized by cent dist
+mfinalcent <- 
+  # distance to dam
+  mapview(data_k_dist, zcol="cum_len_km",
+          layer.name="Distance<br> to Dam (km)",
+          legend=TRUE, cex="cum_len_km", basemaps=mapbases) +
+          #col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)])) +
+  
+  # distance to centroid
+  mapview(data_k_dist, zcol="dist_to_centroid",
+          layer.name="Distance <br>to Centroid",
+          legend=TRUE, cex="dist_to_centroid", basemaps=mapbases) +
+          #col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)])) + 
+  # dams 
   mapview(dams_final, col.region="black", 
           cex=6, layer.name="Dams", homebutton=FALSE) + 
+  # ds mainstems
   mapview(ds_main_merged, col.region="darkblue", lwd=1.5,
           homebutton=FALSE, legend=FALSE, layer.name="Rivers DS") +
-  
+  # k classes
   mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
           col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
           alpha.regions=0.8, cex=3.5,
           hide=FALSE, homebutton=FALSE)
 
-mfinal@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
+mfinalcent@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
-# save this out!
-save(data_k_dist, file = "output/12_data_k_centdist_damdist.rda")
+
 
 
 # 10: GET EUCLIDEAN DISTANCE TO NEAREST DAM ---------------------------------

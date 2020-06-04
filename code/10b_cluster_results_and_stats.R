@@ -55,6 +55,10 @@ ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
 # plot with text labels
 ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
 
+
+fviz_pca_var(prcomp(ann_metrics_s))
+
+
 # gg pca plot
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)") +
@@ -145,6 +149,11 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 
 member_locations <- as.data.frame(ggclust2_k5$data)
 
+mean_x <- mean(member_locations$x)
+mean_y <- mean(member_locations$y)
+member_locations$dist_to_centroid <- sqrt((mean_x-member_locations$x)^2 + (mean_y-member_locations$y)^2)
+head(member_locations)
+
 member_locations_2_4 <- member_locations %>% 
   filter(cluster != "1") %>% 
   filter(cluster != "5") %>% 
@@ -178,9 +187,11 @@ class_4 <- class_4 %>%
   arrange(desc(dist_to_centroid))
 
 # bind together
-class_cent_df <- bind_rows(class_2, class_4) %>% 
-  rename(station_id=name)
+# class_cent_df <- bind_rows(class_2, class_4) %>% 
+#   rename(station_id=name)
 
+class_cent_df <- member_locations %>% 
+  rename(station_id = name)
 
 # Map Results -------------------------------------------------------------
 
@@ -209,12 +220,28 @@ data_sf <- left_join(data_k_sf, class_cent_df[,c(1,5,6)], by=c("station_id"))
 # save out dist_to_centroids
 save(class_cent_df, file = "output/models/10b_dist_to_centroids_class2_4.rda")
 
+save(class_cent_df, file = "output/models/10b_dist_to_centroids_all_classes.rda")
+
+
+
 # hist of distances
 hist(class_cent_df$dist_to_centroid)
+
+# PCA
+ann_metrics_v2 <- ann_metrics %>% 
+  left_join(., class_cent_df[,c(1,5,6)]) %>% 
+  select(station_id, ann_mean, ann_amp, DOWY, dist_to_centroid, cluster) %>% # select only metrics to model
+  dplyr::mutate_at(vars(ann_mean:dist_to_centroid), .funs = scale) %>%
+  tibble::column_to_rownames(var = "station_id") %>% 
+  mutate(cluster = as.numeric(cluster))
+
+fviz_pca_var(prcomp(ann_metrics_v2))
 
 # so majority are around 3-4
 
 # make map of sites less than 3
 library(mapview)
 mapview(data_sf, zcol="k_5", col.regions=c("#E41A1C", "#FF7F00", "#984EA3", "#4DAF4A", "#377EB8"), legend=F, cex=4) +
-  mapview(data_sf %>% filter(dist_to_centroid <3), zcol="dist_to_centroid", cex="dist_to_centroid")
+  mapview(data_sf %>% 
+            filter(dist_to_centroid <15), 
+          zcol="dist_to_centroid", cex="dist_to_centroid")
