@@ -138,7 +138,7 @@ thermCols <- with(ann_metrics_k,
    theme_classic() +
    annotate("text", y=2.2, x=1, label="stable warm", color=thermCols$color[1], cex=2, fontface=2)+
    annotate("text", y=5, x=2, label="variable\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
-   annotate("text", y=5.8, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
+   annotate("text", y=6.9, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
    annotate("text", y=4, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
    annotate("text", y=2.2, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
    labs(y=expression("annual amplitude " (degree*C)), x="") + 
@@ -151,4 +151,4 @@ plot_grid(gg_top,fig_row_2, labels = c("A"),
 
 
 #save
-ggsave("output/figures/Fig_3_classified_models_and_box_plots.jpeg", width = 9, height = 6.5, units = "in", dpi=300)
+ggsave("output/figures/Fig_3_classified_models_and_box_plots.jpeg", width = 9, height = 6.5, units = "in", dpi=600)
