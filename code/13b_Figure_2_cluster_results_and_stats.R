@@ -97,7 +97,7 @@ thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
                         )))
 
 # check
-ggclust2_k5 + theme_classic() +
+plot_pc_k5 <- ggclust2_k5 + theme_classic() +
   scale_fill_manual("Thermal \nClasses", values=thermCols$color, 
                     labels=thermCols$k5_names)+
   scale_color_manual("Thermal \nClasses", values=thermCols$color,
@@ -108,9 +108,9 @@ ggclust2_k5 + theme_classic() +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
 
-ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=600, )
+plot_pc_k5
 
-#ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=600, )
 
 # Identify best K ---------------------------------------------------------
 
@@ -157,8 +157,6 @@ k_stats <- as.data.frame(kcriteria$data)
   theme(legend.position = "none"))
 
 fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
-
-#ggsave("output/figures/Fig_2_cluster_results_and_stats.jpeg", width = 5, height = 4, units="in", dpi = 300)
 
 plot_grid(plot_pc_k5, p1, p2, labels = c("A", "B", "C"), nrow = 2, rel_heights = c(1.5,1))
 
