@@ -17,6 +17,7 @@ all_sites_model_data <- read_csv(file = "output/models/thermal_regime_models_dai
 
 load("output/12_data_k_centdist_damdist.rda")
 
+
 classification_group_results <- data_k_dist %>% 
   select(station_id, k_5, k5_names, color)
 

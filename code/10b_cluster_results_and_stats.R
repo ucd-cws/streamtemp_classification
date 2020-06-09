@@ -89,7 +89,7 @@ ggclust2_k5 + theme_classic() +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
 
-ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=300, )
+ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=600, )
 
 # HCLUST: Stats  -----------------------------------------------------------
 
