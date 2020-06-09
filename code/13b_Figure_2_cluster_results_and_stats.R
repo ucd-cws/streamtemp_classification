@@ -86,26 +86,31 @@ ggclust2_k5 + theme_classic() +
 
 # thermColor scale
 thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
-                        k5_names  = c("stable warm", "reg warm",
-                                      "reg cool", "unreg cool",
+                        k5_names  = c("stable warm", "variable warm",
+                                      "stable cool", "variable cool",
                                       "stable cold"),
                         color = I(c("#E41A1C", #stable warm
-                                    "#FF7F00", #reg warm
-                                    "#984EA3", #reg cool
-                                    "#4DAF4A", #unreg cool
+                                    "#FF7F00", #variable warm
+                                    "#984EA3", #stable cool
+                                    "#4DAF4A", #variable cool
                                     "#377EB8" #stable cold
                         )))
 
 # check
-(plot_pc_k5 <- ggclust2_k5 + theme_classic() +
-  scale_fill_manual("Thermal \nClasses", values=thermCols$color)+
-  scale_color_manual("Thermal \nClasses", values=thermCols$color)+
-  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8))+
+ggclust2_k5 + theme_classic() +
+  scale_fill_manual("Thermal \nClasses", values=thermCols$color, 
+                    labels=thermCols$k5_names)+
+  scale_color_manual("Thermal \nClasses", values=thermCols$color,
+                     labels=thermCols$k5_names)+
+  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8),
+                     labels=thermCols$k5_names)+
   labs(title = "Clusters for CA Thermal Regimes (k=5)") +
   guides(fill = guide_legend(
-    override.aes = aes(label = ""))))
+    override.aes = aes(label = "")))
 
-ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
+ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=600, )
+
+#ggsave("output/figures/pc_agnes_k5.png", width = 8, height = 6, units="in", dpi=300)
 
 # Identify best K ---------------------------------------------------------
 
@@ -159,4 +164,4 @@ plot_grid(plot_pc_k5, p1, p2, labels = c("A", "B", "C"), nrow = 2, rel_heights =
 
 plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1,1), rel_widths = c(1,.5,.5))
 
-ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 300)
+ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 600)
