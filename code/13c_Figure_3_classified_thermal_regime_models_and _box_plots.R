@@ -15,59 +15,53 @@ library(ggthemes)
 #Figure 3a: annual thermal regime models, grouped by class
 all_sites_model_data <- read_csv(file = "output/models/thermal_regime_models_daily.csv", col_types = list("c", "i", "n", "n"))
 
-load("output/models/agnes_k_groups_v2_w_selected_dams.rda")
+load("output/12_data_k_centdist_damdist.rda")
 
-load("output/models/10a_agnes_k_groups_final.rda")
-load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 
-rm(classification_group_results)
-classification_group_results <- agnes_k_groups %>% 
-  select(site_id, k_5) %>% 
-  mutate(station_id = site_id)
+classification_group_results <- data_k_dist %>% 
+  select(station_id, k_5, k5_names, color)
 
-merge_models_and_classes <- left_join(ann_metrics, classification_group_results) %>% 
-  filter(!is.na(k_5)) ##need to add column that defines color for each class.
-
+merge_models_and_classes <- left_join(all_sites_model_data, classification_group_results) 
 
 # Annual max metrics for table --------------------------------------------
 
 
 stable_warm <- merge_models_and_classes %>% 
-  filter(k_5 == "stable warm")
+  filter(k5_names == "1-stable warm")
 max(stable_warm$model_avg_daily_temp_C)
 
 reg_warm <- merge_models_and_classes %>% 
-  filter(k_5 == "reg warm")
+  filter(k5_names == "2-variable warm")
 mean(max(reg_warm$model_avg_daily_temp_C))
 
 reg_cool <- merge_models_and_classes %>% 
-  filter(k_5 == "reg cool")
+  filter(k5_names == "3-stable cool")
 mean(max(reg_cool$model_avg_daily_temp_C))
 
 unreg_cool <- merge_models_and_classes %>% 
-  filter(k_5 == "unreg cool")
+  filter(k5_names == "4-variable cool")
 mean(max(unreg_cool$model_avg_daily_temp_C))
 
 stable_cold <- merge_models_and_classes %>% 
-  filter(k_5 == "stable cold")
+  filter(k5_names == "5-stable cold")
 mean(max(stable_cold$model_avg_daily_temp_C))
 
 
 # Model Fig (A) -----------------------------------------------------------
 
 class_names <- c(
-  "stable warm" = "1",
-  "variable warm" = "2",
-  "stable cool" = "3",
-  "variable cool" = "4",
-  "stable cold" = "5"
+  "1-stable warm" = "stable warm",
+  "2-variable warm" = "variable warm",
+  "3-stable cool" = "stable cool",
+  "4-variable cool" = "variable cool",
+  "5-stable cold" = "stable cold"
 )
 
 
 (gg_top <- ggplot(data = merge_models_and_classes) + 
     geom_line(aes(x=DOWY, y=model_avg_daily_temp_C, group = station_id, color = color), show.legend = FALSE)+
     #facet_grid(cols = vars(k_5)) +
-    facet_wrap(vars(k_5), ncol = 5, labeller = labeller(k_5 = class_names)) +
+    facet_wrap(vars(k5_names), ncol = 5, labeller = labeller(k5_names = class_names)) +
     labs(x = "day of water year", 
          y = expression("modelled avg daily temp " (degree*C))) +
     theme_clean() + 
@@ -75,16 +69,16 @@ class_names <- c(
           axis.title.x.bottom = element_text(margin = margin(b=20, t=10))))
 
 # Figure 3b: box plots of three regime metrics, grouped by class
-load("output/models/annual_cluster_metrics_all_gages.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 
 # join with the groups
 ann_metrics_k <- left_join(ann_metrics, classification_group_results) %>% 
-  mutate(k_5 = as.factor(k_5)) %>% 
-  filter(!is.na(k_5))
+  mutate(k_5 = as.factor(k_5)) 
   
 # add colors
 thermCols <- with(ann_metrics_k, 
                   data.frame(k_5 = levels(k_5),
+                             k5_names = levels(k5_names),
                              color = I(c("#E41A1C", #stable warm
                                          "#FF7F00", #variable warm
                                          "#984EA3", #stable cool
@@ -98,7 +92,7 @@ thermCols <- with(ann_metrics_k,
 # now plot gg1
 (gg1 <- ggplot() + 
     geom_boxplot(data=ann_metrics_k, 
-                 aes(x=k_5, y=ann_mean, group=k_5, fill=k_5), 
+                 aes(x=k5_names, y=ann_mean, group=k5_names, fill=k5_names), 
                  show.legend = TRUE) +
     scale_fill_manual("Thermal Classes", values=thermCols$color) +
     theme_classic() +
@@ -111,14 +105,14 @@ thermCols <- with(ann_metrics_k,
 # option b
 (gg1 <- ggplot() + 
     geom_boxplot(data=ann_metrics_k, 
-                 aes(x=k_5, y=ann_mean, group=k_5, fill=k_5), 
+                 aes(x=k5_names, y=ann_mean, group=k5_names, fill=k5_names), 
                  show.legend = FALSE) +
     scale_fill_manual("Thermal Classes", values=thermCols$color) +
     theme_classic() +
     annotate("text", y=26.3, x=1, label="stable warm", color=thermCols$color[1], cex=2, fontface=2)+
-    annotate("text", y=20, x=2, label="regulated\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
-    annotate("text", y=16, x=3, label="regulated\ncool", color=thermCols$color[3], cex=2, fontface=2)+
-    annotate("text", y=14.5, x=4, label="unregulated\ncool", color=thermCols$color[4], cex=2, fontface=2)+
+    annotate("text", y=20, x=2, label="variable\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
+    annotate("text", y=16, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
+    annotate("text", y=14.5, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
     annotate("text", y=13, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
     labs(y=expression("annual mean " (degree*C)), x="") +
     theme(axis.text.x = element_blank(),
@@ -126,25 +120,26 @@ thermCols <- with(ann_metrics_k,
 
 # Day of Ann Max -----------------------------------------------------------------
 
-(gg2 <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_5, y=DOWY, group=k_5, fill=color), show.legend = FALSE) +
+(gg2 <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k5_names, y=DOWY, group=k5_names, fill=color), show.legend = FALSE) +
    theme_classic() + 
    annotate("text", y=340, x=1, label="stable warm", color=thermCols$color[1], cex=2, fontface=2)+
-   annotate("text", y=260, x=2, label="regulated\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
-   annotate("text", y=260, x=3, label="regulated\ncool", color=thermCols$color[3], cex=2, fontface=2)+
-   annotate("text", y=260, x=4, label="unregulated\ncool", color=thermCols$color[4], cex=2, fontface=2)+
+   annotate("text", y=260, x=2, label="variable\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
+   annotate("text", y=260, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
+   annotate("text", y=260, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
    annotate("text", y=165, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
-   labs(y="day of annual max") +
+   labs(y="day of annual max", x="") +
    theme(axis.text.x = element_blank()))
 
 
 # Ann Amplitude -----------------------------------------------------------
 
-(gg3 <- ggplot() + geom_boxplot(data=ann_metrics_k, aes(x=k_5, y=ann_amp, group=k_5, fill=color), show.legend = FALSE) +
+(gg3 <- ggplot() + 
+   geom_boxplot(data=ann_metrics_k, aes(x=k5_names, y=ann_amp, group=k5_names, fill=color), show.legend = FALSE) +
    theme_classic() +
    annotate("text", y=2.2, x=1, label="stable warm", color=thermCols$color[1], cex=2, fontface=2)+
-   annotate("text", y=5, x=2, label="regulated\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
-   annotate("text", y=5.8, x=3, label="regulated\ncool", color=thermCols$color[3], cex=2, fontface=2)+
-   annotate("text", y=4, x=4, label="unregulated\ncool", color=thermCols$color[4], cex=2, fontface=2)+
+   annotate("text", y=5, x=2, label="variable\nwarm", color=thermCols$color[2], cex=2, fontface=2)+
+   annotate("text", y=5.8, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
+   annotate("text", y=4, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
    annotate("text", y=2.2, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
    labs(y=expression("annual amplitude " (degree*C)), x="") + 
    theme(axis.text.x = element_blank()))
