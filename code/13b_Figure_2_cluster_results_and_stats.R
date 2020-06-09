@@ -138,8 +138,6 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 (p4 <-cowplot::plot_grid(p1, p2, nrow = 1, labels = c("B","C")))
 
 
-
-
 # Make final plots --------------------------------------------------------
 
 k_stats <- as.data.frame(kcriteria$data)
