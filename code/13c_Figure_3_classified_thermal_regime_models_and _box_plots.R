@@ -17,11 +17,16 @@ all_sites_model_data <- read_csv(file = "output/models/thermal_regime_models_dai
 
 load("output/models/agnes_k_groups_v2_w_selected_dams.rda")
 
-classification_group_results <- data_k_sf_v2 %>% 
-  select(station_id, k_5, color)
+load("output/models/10a_agnes_k_groups_final.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 
-merge_models_and_classes <- left_join(all_sites_model_data, classification_group_results) %>% 
-  filter(!is.na(k_5))
+rm(classification_group_results)
+classification_group_results <- agnes_k_groups %>% 
+  select(site_id, k_5) %>% 
+  mutate(station_id = site_id)
+
+merge_models_and_classes <- left_join(ann_metrics, classification_group_results) %>% 
+  filter(!is.na(k_5)) ##need to add column that defines color for each class.
 
 
 # Annual max metrics for table --------------------------------------------
@@ -51,11 +56,11 @@ mean(max(stable_cold$model_avg_daily_temp_C))
 # Model Fig (A) -----------------------------------------------------------
 
 class_names <- c(
-  "stable warm" = "stable warm",
-  "reg warm" = "regulated warm",
-  "reg cool" = "regulated cool",
-  "unreg cool" = "unregulated cool",
-  "stable cold" = "stable cold"
+  "stable warm" = "1",
+  "variable warm" = "2",
+  "stable cool" = "3",
+  "variable cool" = "4",
+  "stable cold" = "5"
 )
 
 
@@ -81,9 +86,9 @@ ann_metrics_k <- left_join(ann_metrics, classification_group_results) %>%
 thermCols <- with(ann_metrics_k, 
                   data.frame(k_5 = levels(k_5),
                              color = I(c("#E41A1C", #stable warm
-                                         "#FF7F00", #reg warm
-                                         "#984EA3", #reg cool
-                                         "#4DAF4A", #unreg cool
+                                         "#FF7F00", #variable warm
+                                         "#984EA3", #stable cool
+                                         "#4DAF4A", #variable cool
                                          "#377EB8" #stable cold
                              ))))
 

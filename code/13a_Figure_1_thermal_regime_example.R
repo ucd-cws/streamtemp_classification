@@ -65,4 +65,4 @@ ggplot(data = Sac_11390500_model_data) +
   theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
 
 # save
-ggsave("output/figures/Fig_1_thermal_regime_model.jpeg", width = 6, height = 3.5, units = "in", dpi=300)
+ggsave("output/figures/Fig_1_thermal_regime_model.jpeg", width = 6, height = 3.5, units = "in", dpi=600)
