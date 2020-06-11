@@ -15,11 +15,7 @@ library(ggspatial)
 # LOAD DATA ---------------------------------------------------------------
 
 # clustering data and dams
-load("output/models/agnes_k_groups_v2_w_selected_dams.rda")
-
-# rename and transform for code below:
-data_k_sf <- data_k_sf_v2 %>% st_transform(4326)
-rm(data_k_sf_v2)
+load("output/12_data_k_centdist_damdist.rda")
 
 # dams in selected locations
 dams_selected <- readRDS("output/12_selected_dam_comids.rds")
@@ -29,29 +25,25 @@ dams_selected <- readRDS("output/12_selected_dam_comids.rds")
 
 # Thermal Classifications
 # "stable warm" = 1
-# "reg warm"= 3, 
-# "reg cool" = 4,
-# "unreg cool"= 2, 
+# "variable warm"= 3, 
+# "stable cool" = 4,
+# "variable cool"= 2, 
 # "stable cold"= 5
 
-levels(data_k_sf$k_5)
+levels(data_k_dist$k5_names)
 
 # * Make Custom Color Palette ----------------------------------------------
 
 # make a custom set of colors in a dataframe
-thermCols <- with(data_k_sf,
-                  data.frame(k_5 = levels(k_5),
+thermCols <- with(data_k_dist,
+                  data.frame(k_5 = levels(k5_names),
                              color = I(c("#E41A1C", #stable warm
-                                         "#FF7F00", #reg warm
-                                         "#984EA3", #reg cool
-                                         "#4DAF4A", #unreg cool
+                                         "#FF7F00", #variable warm
+                                         "#984EA3", #stable cool
+                                         "#4DAF4A", #variable cool
                                          "#377EB8" #stable cold
                                        ))))
 thermCols
-
-## this already part of dataset, but leaving for reference
-# use "merge" to add to existing dataframe
-#data_k_sf <- merge(data_k_sf, thermCols)
 
 # SIMPLE BASE PLOT --------------------------------------------------------------------
 # using basemap options
@@ -60,10 +52,10 @@ thermCols
 plot(USAboundaries::us_counties(resolution = "low", states="ca")$geometry, border = alpha("gray70", 0.8), lwd=0.9, lty=3)
 # plot state boundary
 plot(USAboundaries::us_boundaries(type="state", states="ca")$geometry, lwd=2, add=T)
-plot(data_k_sf$geometry, pch=21, 
-     bg=data_k_sf$color, add=T)
-legend(x = 'bottomright', 
-       legend = levels(data_k_sf$k_5),
+plot(data_k_dist$geometry, pch=21, 
+     bg=data_k_dist$color, add=T)
+legend(x = 'topright', 
+       legend = levels(data_k_dist$k5_names),
        col = thermCols$color,
        pch = 16, bty = 'n', xjust = 1)
 
@@ -79,7 +71,7 @@ legend(x = 'bottomright',
    geom_sf(data=USAboundaries::us_counties(states="ca")$geometry, 
            fill = NA, color = 'slategray4', size = 0.3, lty=2, alpha = 0.4) +
    # add k groups/points
-   geom_sf(data = data_k_sf, aes(color = k_5, shape=k_5), size = 4) +
+   geom_sf(data = data_k_dist, aes(color = k5_names, shape=k5_names), size = 4) +
    # add north arrow and scale bar
    annotation_north_arrow(location="tr", 
                           pad_x = unit(1.5, "cm"), 
