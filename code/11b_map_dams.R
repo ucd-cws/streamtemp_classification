@@ -21,7 +21,11 @@ load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf
 load("output/11a_dams_nearest_final.rda")
 
 # get rivers
-load("output/12_selected_nhd_mainstems_for_gages.rda")
+load("output/12_selected_nhd_gage_mainstems.rda")
+
+# get DWR hydrologic regions
+hydro_regions <- st_read("data/shps/DWR_HydrologicRegions-utm11.shp") %>%
+  st_transform(3310)
 
 # all dams CA/OR
 dams <- read_sf("data/shps/CA_OR_dams.shp", quiet = F) %>% st_transform(4326)
@@ -40,11 +44,12 @@ mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "Ope
 mapviewOptions(basemaps=mapbases)
 
 # map k5
-m5 <- mapview(dams_nearest_final, col.regions="black",
+m5 <-  mapview(hydro_regions, col.regions= NA) +
+  mapview(dams_nearest_all_final, col.regions="black",
                 layer.name="Selected Dams", cex=6,
                 hide=TRUE, homebutton=FALSE)+
-  mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
-  mapview(mainstems_all, color="steelblue", cex=3, 
+  #mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
+  mapview(mainstems_gage_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
   mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
