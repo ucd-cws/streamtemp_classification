@@ -32,16 +32,16 @@ gage_QA_all <- gage_QA_progress %>%
 gage_QA_all <- gage_QA_all %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
-# hydro_regions <- st_read("data/DWR_HydrologicRegions-utm11.shp") %>%
-#   st_transform(3310)
-# 
-# mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
-# 
-# ggplot()+
-#   geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
-#   geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
-#   annotation_north_arrow(location = "tr", pad_y = unit(0.1,"cm")) +
-#   annotation_scale()
+hydro_regions <- st_read("data/shps/DWR_HydrologicRegions-utm11.shp") %>%
+  st_transform(3310)
+
+mapview(gage_QA_all, zcol = "operator") + mapview(hydro_regions, col.regions = NA)
+
+ggplot()+
+  geom_sf(data = hydro_regions, fill = NA, color = 'darkslategrey', size = 1, alpha = 0.4) +
+  geom_sf(data = gage_QA_all, aes(fill = operator), pch = 21, size = 4) +
+  annotation_north_arrow(location = "tr", pad_y = unit(0.1,"cm")) +
+  annotation_scale()
 # 
 # ggsave(filename = "output/figures/final_gages_in_hyd_regions.png", dpi = 300, width = 8.5, height = 11, units = "in")
 
