@@ -35,7 +35,7 @@ sites <- all_sites %>%
   rename(station_id = site_id)
 
 # get rivers
-load("output/12_selected_nhd_mainstems_for_gages.rda")
+load("output/12_selected_nhd_gage_mainstems.rda")
 
 # Add K_group Data --------------------------------------------------------
 
@@ -56,6 +56,7 @@ anti_join(agnes_k_groups, sites) # localities in agnes_k_groups not in sites
 data_k <- left_join(agnes_k_groups, sites) %>% 
   # drop cols we don't need
   select(station_id, k_5, site_name:operator)
+
 
 
 # Add Colors and Group Labels ---------------------------------------------
@@ -93,8 +94,16 @@ data_k <- left_join(data_k, class_cent_df)
 data_k_sf <- data_k %>% 
   st_as_sf(coords = c("lon", "lat"), crs = 4326, remove = FALSE)
 
+# Add DWR hydrologic region to data_k df
+data_k_sf_w_hydro_regions <- st_join(data_k_sf, left = FALSE, hydro_regions["HR_NAME"])
+
+data_k_sf_w_hydro_regions %>% 
+  count(HR_NAME)
+
+hydro_regions %>% 
+  count(HR_NAME)
 ## SAVE?
-save(data_k_sf, file = "output/11a_agnes_k_5_final_w_centdist.rda")
+save(data_k_sf_w_hydro_regions, file = "output/11a_agnes_k_5_final_w_centdist.rda")
 
 # clean up
 rm(sites, all_sites, cboot5_df, agnes_k_groups, data_k)
@@ -116,11 +125,6 @@ dams_nearest_filtered <- dams_nearest %>%
 # save out data for future mapping
 save(dams, dams_nearest_filtered, file = "output/11a_ca_dams_nearest_k_sites.rda")
 
-# setup some basemaps
-mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
-              "Esri.WorldImagery", "Esri.WorldTopoMap","Esri.WorldGrayCanvas"
-)
-mapviewOptions(basemaps=mapbases)
 
 # map k5
 m5 <- mapview(dams_nearest_filtered, col.regions="black",
