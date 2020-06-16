@@ -55,10 +55,6 @@ ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
 # plot with text labels
 ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
 
-
-fviz_pca_var(prcomp(ann_metrics_s))
-
-
 # gg pca plot
 ggclust2_k5 + theme_classic() +
   labs(title = "Clusters for CA Thermal Regimes (k=5)") +
@@ -144,6 +140,16 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 # Display plots side by side
 (p4 <-cowplot::plot_grid(p1, p2, nrow = 1, labels = c("B","C")))
 
+
+#Explore contribution of variables to principle components (Dim1 and Dim2); based on code from Principal Component Methods in R: Practical Guide, described here: http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/112-pca-principal-component-analysis-essentials/
+
+fviz_pca_var(prcomp(ann_metrics_s))
+
+PCA <- prcomp(ann_metrics_s)
+
+var <- get_pca_var(PCA)
+
+head(var$contrib, 3)
 
 # Plot distance to centroid for each member in classes 2 and 4 --------
 
