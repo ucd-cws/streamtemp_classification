@@ -86,14 +86,14 @@ ggclust2_k5 + theme_classic() +
 
 # thermColor scale
 thermCols <- data.frame(k5_group_id = c(1,3,4,2,5),
-                        k5_names  = c("stable warm", "variable warm",
-                                      "stable cool", "variable cool",
-                                      "stable cold"),
-                        color = I(c("#E41A1C", #stable warm
-                                    "#FF7F00", #variable warm
-                                    "#984EA3", #stable cool
-                                    "#4DAF4A", #variable cool
-                                    "#377EB8" #stable cold
+                        k5_names  = c("1", "2",
+                                      "3", "4",
+                                      "5"),
+                        color = I(c("#E41A1C", #1: stable warm
+                                    "#FF7F00", #2: variable warm
+                                    "#984EA3", #3: stable cool
+                                    "#4DAF4A", #4: variable cool
+                                    "#377EB8" #5
                         )))
 
 # check
@@ -140,23 +140,7 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 
 # Make final plots --------------------------------------------------------
 
-k_stats <- as.data.frame(kcriteria$data)
-
-(plot_CHIndex <- ggplot() + geom_line(data = k_stats, aes(x = k, y = CHIndex, color = "coral1"), size = 1) +
-  geom_point(data = k_stats, aes(x = k, y = CHIndex, color = "coral1"), size = 2) +
-  scale_x_continuous(breaks = seq(min(k_stats$k), max(k_stats$k), by = 1)) +
-  theme_classic() +
-  theme(legend.position = "none"))
-
-(plot_wss <- ggplot() + geom_line(data = k_stats, aes(x = k, y = wss), color = "deepskyblue1", size = 1) +
-  geom_point(data = k_stats, aes(x = k, y = wss), color = "deepskyblue1", size = 2) +
-  scale_x_continuous(breaks = seq(min(k_stats$k), max(k_stats$k), by = 1)) +
-  theme_classic() +
-  theme(legend.position = "none"))
-
 fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
-
-plot_grid(plot_pc_k5, p1, p2, labels = c("A", "B", "C"), nrow = 2, rel_heights = c(1.5,1))
 
 plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1,1), rel_widths = c(1,.5,.5))
 
