@@ -18,16 +18,18 @@ summary(ann_metrics)
 #make a date column, only month and day of water year
 ann_metrics$date <- format(as.Date(ann_metrics$DOWY, origin = "2018-10-01"), "%m-%d")
 
-#add thermal regime class numbers
-thermal_regime_parameters <- left_join()
+#add thermal regime class numbers, drop cols we don't need
+thermal_regime_parameters <- left_join(agnes_k_groups, ann_metrics, by=c("site_id"="station_id")) %>% 
+  rename(station_id = site_id) %>% 
+  select(station_id, ann_mean, ann_max, DOWY, date, k_5)
 
-# # join site data with groups
-# data_k <- left_join(agnes_k_groups, sites, by=c("site_id"="station_id")) %>% 
-#   rename(station_id=site_id) %>% 
-#   # drop cols we don't need
-#   select(station_id, k_5, site_name:operator)
+#Stable warm features
+thermal_regime_parameters[thermal_regime_parameters$k_5=="1",2:5]
 
-#make dataframe of only thermal regime parameter values
-thermal_regime_parameters <- ann_metrics %>% 
-  select(station_id, ann_mean, ann_max, DOWY, date)
+#Stable cold features
+stable_cold <- thermal_regime_parameters %>% 
+  filter(k_5 == 5) %>% 
+  summarize(mean_max = mean(ann_max), mean_DOWY = mean(DOWY), annual_mean = mean(ann_mean))
+
+stable_cold$date <- format(as.Date(stable_cold$mean_DOWY, origin = "2018-10-01"), "%m-%d")
 
