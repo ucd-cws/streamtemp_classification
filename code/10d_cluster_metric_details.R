@@ -33,3 +33,15 @@ stable_cold <- thermal_regime_parameters %>%
 
 stable_cold$date <- format(as.Date(stable_cold$mean_DOWY, origin = "2018-10-01"), "%m-%d")
 
+# variable warm
+variable_warm <- thermal_regime_parameters %>% 
+  filter(k_5 == 3) %>% 
+  count()
+  
+variable_warm <- thermal_regime_parameters %>% 
+  filter(k_5 == 3) %>%
+  summarize(mean_max = mean(ann_max), mean_DOWY = mean(DOWY), annual_mean = mean(ann_mean)) 
+
+variable_warm$date <- format(as.Date(variable_warm$mean_DOWY, origin = "2018-10-01"), "%m-%d")
+
+
