@@ -25,11 +25,7 @@ options(scipen=999)
 # 1. LOAD DATA ------------------------------------------------------------
 
 # clustering data and dams
-load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf
-
-# update/rename some cols
-data_k_sf <- data_k_sf %>% 
-  rename(cent_x = x, cent_y = y)
+load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf_w_hydro_regions
 
 # dams
 load("output/11a_dams_nearest_final.rda")
@@ -42,6 +38,14 @@ dams_final <- dams_nearest_all_final %>%
   select(-c(damname:inspdate)) %>% # drop empty cols
   mutate(lon = st_coordinates(.)[,1],
          lat = st_coordinates(.)[,2])
+
+# clean
+data_k_sf <- data_k_sf_w_hydro_regions
+data_k_sf <- st_set_crs(data_k_sf,4326)
+
+# update/rename some cols
+data_k_sf <- data_k_sf %>% 
+  rename(cent_x = x, cent_y = y)
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite", 

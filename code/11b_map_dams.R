@@ -17,6 +17,8 @@ library(ggspatial)
 # the k groups data 
 load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf
 
+data_k_sf <- data_k_sf_w_hydro_regions
+
 # the filtered dams data
 load("output/11a_dams_nearest_final.rda")
 
