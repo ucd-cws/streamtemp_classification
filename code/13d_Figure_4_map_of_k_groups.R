@@ -20,9 +20,7 @@ crs_proj <- 3310
 
 # clustering data and dams
 load("output/12_data_k_centdist_damdist.rda")
-
 load("output/12_dams_final_mainstems_merged.rda")
-
 
 # transform to same projection:
 data_k_dist <- data_k_dist %>% st_transform(crs_proj)
@@ -40,6 +38,8 @@ hydro <- st_read("data/shps/DWR_HydrologicRegions-utm11.shp") %>%
 # get more river data
 load("output/13d_rivers_ca_streamorder_6.rda")
 load("output/12_selected_nhd_gage_mainstems.rda") # mainstems from gages
+mainstems_gage_all <- mainstems_gage_all %>% st_transform(crs_proj)
+
 
 # Tidy Data ---------------------------------------------------------------
 
@@ -53,7 +53,7 @@ hydro <- hydro %>%
 hydro <- rmapshaper::ms_simplify(hydro, keep = 0.1,
                         keep_shapes = TRUE)
 
-#mapview(hydro, zcol="HR_NAME") + mapview(rivs, color="steelblue")
+#mapview(hydro, zcol="HR_NAME") + mapview(mainstems_gage_all, color="steelblue")
 
 # assign color palette based on classifications:
 thermCols <- data.frame(k5_group_id = c(1:5),
@@ -157,9 +157,9 @@ rivers_ca <- rivers_ca %>% st_transform(crs_proj)
     geom_sf(data=hydro, aes(lty="Hydroregions"), color=alpha("black", 0.3), fill=NA, size=0.25) +
     scale_linetype_manual("", values = c("Hydroregions" = 2), 
                           guide = guide_legend(override.aes = list(color = "black", alpha=0.5, lwd=0.5), order=2)) +
-    #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
-    geom_sf(data=rivers_ca, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
-    geom_sf(data=ds_main_merged, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9) + 
+    geom_sf(data=rivs, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3) +
+    #geom_sf(data=rivers_ca, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
+    geom_sf(data=mainstems_gage_all, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9) + 
     geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3) +
     geom_sf(data=dams_final, aes(fill="Dams"), pch=25, size=4.5, alpha=0.75) +
     scale_fill_manual("", values=c("Dams"="black"), 
@@ -184,8 +184,8 @@ rivers_ca <- rivers_ca %>% st_transform(crs_proj)
 )
 
 # save
+ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_all_rivers.pdf", dpi=300, width=8, height = 11.5, units="in", device=cairo_pdf)
 ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_select.pdf", dpi=300, width=8, height = 11.5, units="in", device=cairo_pdf)
-
 
 # sized by centroid distance?
 # facet/panels of a few regions
@@ -199,12 +199,12 @@ ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_sel
     scale_linetype_manual("", values = c("Hydroregions" = 2), 
                           guide = guide_legend(override.aes = list(color = "black", alpha=0.5, lwd=0.5), order=3)) +
     #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
-    geom_sf(data=rivers_ca, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
-    geom_sf(data=ds_main_merged, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9) + 
+    geom_sf(data=rivers_ca, lwd=0.2, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
+    geom_sf(data=mainstems_gage_all, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9) + 
     geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3) +
     geom_sf(data=dams_final, aes(color="Dams"), fill="black", pch=25, size=3, alpha=0.8) +
     scale_color_manual("", values=c("Dams"="black"), 
-                      guide = guide_legend(override.aes = list(alpha=1, order=2, lty=NA)))+
+                      guide = guide_legend(override.aes = list(alpha=1, lty=NA), order=2))+
     geom_sf(data = data_k_dist, aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97) +
     geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), size=3, point.padding = 0.7, min.segment.length = 5, segment.alpha = 0.5, force=8, segment.color = "gray20", show.legend = FALSE) +
     # add north arrow and scale bar
@@ -212,19 +212,19 @@ ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_sel
                            pad_x = unit(1.5, "cm"), 
                            pad_y = unit(0.5, "cm")) +
     annotation_scale(location="br") +
-    scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(order=1)) +
+    scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(override.aes = list(size=4), order=1)) +
     scale_size_area("Centroid Dist.", guide=guide_legend(order=2)) +
     theme_map(base_family = "Roboto Condensed", base_size = 15) +
     theme(legend.background = element_rect(fill = NA),
           #plot.background = element_rect(color="black", size = 0.5),
           legend.key = element_rect(color = NA, size=NA),
           legend.position = c(0, 0.05), 
-          legend.spacing.y = unit(0,"cm"),
+          legend.spacing.y = unit(0.1,"cm"),
           legend.margin = margin(0.1, 0, 0, 0, "cm"))
 )
 
 # save
-ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_select.pdf", dpi=300, width=8, height = 11.5, units="in", device=cairo_pdf)
+ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_select_cent_dist.pdf", dpi=300, width=8.5, height = 11, units="in", device=cairo_pdf)
 
 
 # MAPVIEW MAP OF DIST TO CENTROID -----------------------------------------
@@ -270,57 +270,86 @@ mfinalcent@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 # GGMAP BACKGROUND --------------------------------------------------------
 
-
 library(ggmap)
 
-map1 <- get_map(location=c(mapRange1[1], mapRange1[3],mapRange1[2], mapRange1[4]), crop = F,
+# make a bounding box in lat/lon
+mapRange1 <- st_transform(ca, 4326) 
+(mapRange1 <- c(range(st_coordinates(mapRange1)[,1]),range(st_coordinates(mapRange1)[,2])))
+
+# this only works with an API KEY
+map3 <- get_map(location=c(mapRange1[1], mapRange1[3],mapRange1[2], mapRange1[4]), crop = F,
                 color="bw",
                 maptype="terrain",
                 source="google",
-                zoom=8)
+                zoom=9)
+
+# quick view?
+ggmap(map3)
 
 # Define a function to fix the bbox to be in EPSG:3857
-ggmap_bbox <- function(map) {
+#ggmap_bbox <- function(map) {
    if (!inherits(map, "ggmap")) stop("map must be a ggmap object")
    # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
    # and set the names to what sf::st_bbox expects:
    map_bbox <- setNames(unlist(attr(map, "bb")), 
                         c("ymin", "xmin", "ymax", "xmax"))
    
-   # Coonvert the bbox to an sf polygon, transform it to 3857, 
+   # Convert the bbox to an sf polygon, transform it to 3857, 
    # and convert back to a bbox (convoluted, but it works)
-   bbox_3857 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3857))
+   bbox_3310 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3310))
    
    # Overwrite the bbox of the ggmap object with the transformed coordinates 
-   attr(map, "bb")$ll.lat <- bbox_3857["ymin"]
-   attr(map, "bb")$ll.lon <- bbox_3857["xmin"]
-   attr(map, "bb")$ur.lat <- bbox_3857["ymax"]
-   attr(map, "bb")$ur.lon <- bbox_3857["xmax"]
+   attr(map, "bb")$ll.lat <- bbox_3310["ymin"]
+   attr(map, "bb")$ll.lon <- bbox_3310["xmin"]
+   attr(map, "bb")$ur.lat <- bbox_3310["ymax"]
+   attr(map, "bb")$ur.lon <- bbox_3310["xmax"]
    map
 }
 
 # Use the function:
-test_map_uk <- ggmap_bbox(test_map_uk)
+test_map <- ggmap_bbox(map3)
 
-ggmap(test_map_uk) + 
-   coord_sf(crs = st_crs(3857)) + # force the ggplot2 map to be in 3857
+ggmap(test_map) + 
+   coord_sf(crs = st_crs(3310))  # force the ggplot2 into 3310
 
+# transform a few layers
+ca <- st_transform(ca, 4326)
+hydro <- st_transform(hydro, 4326)
+rivers_ca <- st_transform(rivers_ca, 4326)
+rivs <- st_transform(rivs, 4326)
+mainstems_gage_all <- st_transform(mainstems_gage_all, 4326)
+dams_final <- st_transform(dams_final, 4326)
+data_k_dist <- st_transform(data_k_dist, 4326)
 
-
-ggmap(map1) +
-   geom_sf(data=dams_final, fill="black", pch=25, size=4.5, alpha=0.75, inherit.aes = F) +
-   geom_sf(data = data_k_dist, aes(color = k5_names, shape=k5_names), size = 4, inherit.aes = F) +
-   #geom_sf(data=hydro, fill=NA, color="skyblue", size=0.8, alpha=0.5, inherit.aes = F) +
-   geom_sf(data=ca, color = "gray30", lwd=1, fill=NA, inherit.aes = F) +
+# actual map
+(ggmap(map3) + #coord_sf(crs = st_crs(3310))+
+   geom_sf(data=hydro, aes(lty="Hydroregions"), color="black", fill=NA, size=0.25, inherit.aes = FALSE) +
+   scale_linetype_manual("", values = c("Hydroregions" = 2), 
+                         guide = guide_legend(override.aes = list(color = "white", alpha=0.5, lwd=0.5), order=3)) +
+   #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
+   geom_sf(data=rivers_ca, lwd=0.2, color="turquoise4", show.legend = FALSE, alpha=0.45, inherit.aes = FALSE) + 
+   geom_sf(data=mainstems_gage_all, lwd=0.3, color="turquoise4", show.legend = FALSE, alpha=0.7, inherit.aes = FALSE) + 
+   #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
+   geom_sf(data=dams_final, aes(color="Dams"), fill="black", pch=25, size=3, alpha=0.8, inherit.aes = FALSE) +
+   scale_color_manual("", values=c("Dams"="black"), 
+                      guide = guide_legend(override.aes = list(alpha=1, lty=NA), order=2))+
+   geom_sf(data = data_k_dist, aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
+   #geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), size=3, point.padding = 0.7, min.segment.length = 5, segment.alpha = 0.5, force=8, segment.color = "gray20", show.legend = FALSE) +
    # add north arrow and scale bar
    annotation_north_arrow(location="tr", 
                           pad_x = unit(1.5, "cm"), 
                           pad_y = unit(0.5, "cm")) +
    annotation_scale(location="br") +
-   scale_color_manual("Thermal \nClasses", values=thermCols$color) +
-   scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8)) +
-   coord_sf(label_axes = "----", label_graticule = "")+
+   scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(override.aes = list(size=4), order=1)) +
+   scale_size_area("Centroid Dist.", guide=guide_legend(order=2)) +
    theme_map(base_family = "Roboto Condensed", base_size = 15) +
    theme(legend.background = element_rect(fill = NA),
-         legend.key = element_rect(fill = NA))
-   
+         #plot.background = element_rect(color="black", size = 0.5),
+         legend.key = element_rect(fill = NA, color = NA, size=NA),
+         legend.position = c(0, 0.05), 
+         legend.spacing.y = unit(0.1,"cm"),
+         legend.margin = margin(0.1, 0, 0, 0.2, "cm"))
+)
+
+# save
+ggsave(filename="output/figures/Fig_4_classification_map_rivers_select_cent_dist_w_ggmap_terrain.pdf", dpi=300, width=8.5, height = 11, units="in", device=cairo_pdf)   
