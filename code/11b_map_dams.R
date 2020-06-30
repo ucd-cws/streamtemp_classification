@@ -11,6 +11,10 @@ library(tidyverse)
 library(ggthemes)
 library(ggspatial)
 
+#added these packages to interactively select areas for each dam panel:
+library(mapedit)
+library(leaflet)
+library(leafpm)
 
 # Load data ---------------------------------------------------------------
 
@@ -53,14 +57,21 @@ m5 <-  mapview(hydro_regions, col.regions= NA) +
   #mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
   mapview(mainstems_gage_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
-  mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
+  mapview(data_k_sf_w_hydro_regions,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
-          col.regions=unique(data_k_sf$color[order(data_k_sf$k5_names)]), 
+          col.regions=unique(data_k_sf_w_hydro_regions$color[order(data_k_sf_w_hydro_regions$k5_names)]), 
           alpha.regions=0.8, cex=3.5,
           hide=FALSE, homebutton=FALSE) 
 
 m5@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
+# Select areas for dam panels ---------------------------------------------
+
+panel_sites <- selectFeatures(data_k_sf_w_hydro_regions, mode =  "click", map = m5) #for some reason, the selectFeatures isn't working - the panel_sites object is created, but nothing I click on saves to the object.
+
+panel_areas <- editMap(m5)
+
+save(panel_areas, file = "output/dam_panel_areas.rda")
 
 # Static map for k5 --------------------------------------------------------------
 
