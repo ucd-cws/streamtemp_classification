@@ -281,13 +281,17 @@ map3 <- get_map(location=c(mapRange1[1], mapRange1[3],mapRange1[2], mapRange1[4]
                 color="bw",
                 maptype="terrain",
                 source="google",
-                zoom=9)
+                zoom=8)
+# save as an object for later
+ggmap_base_z8 <- map3
+save(ggmap_base_z8, file = "output/13d_ggmap_base_layer_zoom8.rda")
 
 # quick view?
 ggmap(map3)
+#ggmap(ggmap_base)
 
 # Define a function to fix the bbox to be in EPSG:3857
-#ggmap_bbox <- function(map) {
+# ggmap_bbox <- function(map) {
    if (!inherits(map, "ggmap")) stop("map must be a ggmap object")
    # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
    # and set the names to what sf::st_bbox expects:
@@ -305,12 +309,10 @@ ggmap(map3)
    attr(map, "bb")$ur.lon <- bbox_3310["xmax"]
    map
 }
-
 # Use the function:
-test_map <- ggmap_bbox(map3)
-
-ggmap(test_map) + 
-   coord_sf(crs = st_crs(3310))  # force the ggplot2 into 3310
+# test_map <- ggmap_bbox(map3)
+# ggmap(test_map) + 
+#    coord_sf(crs = st_crs(3310))  # force the ggplot2 into 3310
 
 # transform a few layers
 ca <- st_transform(ca, 4326)
@@ -322,33 +324,34 @@ dams_final <- st_transform(dams_final, 4326)
 data_k_dist <- st_transform(data_k_dist, 4326)
 
 # actual map
-(ggmap(map3) + #coord_sf(crs = st_crs(3310))+
-   geom_sf(data=hydro, aes(lty="Hydroregions"), color="black", fill=NA, size=0.25, inherit.aes = FALSE) +
-   scale_linetype_manual("", values = c("Hydroregions" = 2), 
-                         guide = guide_legend(override.aes = list(color = "white", alpha=0.5, lwd=0.5), order=3)) +
-   #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
-   geom_sf(data=rivers_ca, lwd=0.2, color="turquoise4", show.legend = FALSE, alpha=0.45, inherit.aes = FALSE) + 
-   geom_sf(data=mainstems_gage_all, lwd=0.3, color="turquoise4", show.legend = FALSE, alpha=0.7, inherit.aes = FALSE) + 
-   #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
-   geom_sf(data=dams_final, aes(color="Dams"), fill="black", pch=25, size=3, alpha=0.8, inherit.aes = FALSE) +
-   scale_color_manual("", values=c("Dams"="black"), 
-                      guide = guide_legend(override.aes = list(alpha=1, lty=NA), order=2))+
-   geom_sf(data = data_k_dist, aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
-   #geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), size=3, point.padding = 0.7, min.segment.length = 5, segment.alpha = 0.5, force=8, segment.color = "gray20", show.legend = FALSE) +
-   # add north arrow and scale bar
-   annotation_north_arrow(location="tr", 
-                          pad_x = unit(1.5, "cm"), 
-                          pad_y = unit(0.5, "cm")) +
-   annotation_scale(location="br") +
-   scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(override.aes = list(size=4), order=1)) +
-   scale_size_area("Centroid Dist.", guide=guide_legend(order=2)) +
-   theme_map(base_family = "Roboto Condensed", base_size = 15) +
-   theme(legend.background = element_rect(fill = NA),
-         #plot.background = element_rect(color="black", size = 0.5),
-         legend.key = element_rect(fill = NA, color = NA, size=NA),
-         legend.position = c(0, 0.05), 
-         legend.spacing.y = unit(0.1,"cm"),
-         legend.margin = margin(0.1, 0, 0, 0.2, "cm"))
+(ggmap(map3) + coord_sf(crs = st_crs(4326))+
+      geom_sf(data=hydro, aes(lty="Hydroregions"), color="black", fill=NA, size=0.25, inherit.aes = FALSE) +
+      scale_linetype_manual("", values = c("Hydroregions" = 2), 
+                            guide = guide_legend(override.aes = list(color = "white", alpha=0.5, lwd=0.5), order=3)) +
+      #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
+      geom_sf(data=rivers_ca, lwd=0.2, color="turquoise4", show.legend = FALSE, alpha=0.45, inherit.aes = FALSE) + 
+      geom_sf(data=mainstems_gage_all, lwd=0.3, color="turquoise4", show.legend = FALSE, alpha=0.7, inherit.aes = FALSE) + 
+      #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
+      geom_sf(data=dams_final, aes(color="Dams"), fill="black", pch=25, size=3, alpha=0.8, inherit.aes = FALSE) +
+      scale_color_manual("", values=c("Dams"="black"), 
+                         guide = guide_legend(override.aes = list(alpha=1, lty=NA), order=2))+
+      geom_sf(data = data_k_dist %>% filter(k_5), aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
+      geom_sf(data = data_k_dist, aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
+      #geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), size=3, point.padding = 0.7, min.segment.length = 5, segment.alpha = 0.5, force=8, segment.color = "gray20", show.legend = FALSE) +
+      # add north arrow and scale bar
+      annotation_north_arrow(location="tr", 
+                             pad_x = unit(1.5, "cm"), 
+                             pad_y = unit(0.5, "cm")) +
+      annotation_scale(location="br") +
+      scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(override.aes = list(size=4), order=1)) +
+      scale_size_area("Centroid Dist.", guide=guide_legend(order=2)) +
+      theme_map(base_family = "Roboto Condensed", base_size = 15) +
+      theme(legend.background = element_rect(fill = NA),
+            #plot.background = element_rect(color="black", size = 0.5),
+            legend.key = element_rect(fill = NA, color = NA, size=NA),
+            legend.position = c(0, 0.05), 
+            legend.spacing.y = unit(0.1,"cm"),
+            legend.margin = margin(0.1, 0, 0, 0.2, "cm"))
 )
 
 # save
