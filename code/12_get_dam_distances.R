@@ -19,6 +19,7 @@ library(readr)
 library(tidylog)
 library(ggthemes)
 library(hrbrthemes)
+library(tidyverse)
 
 options(scipen=999)
 
@@ -598,6 +599,18 @@ mfinalcent@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 load("output/12_data_k_centdist_damdist.rda")
 
+#max distance to stable cool point
+stable_cool <- data_k_dist %>% 
+  filter(k5_names == "3-stable cool") %>% 
+  filter(!is.na(cum_len_km))
+  
+max_dist_stable_cool <- max(stable_cool$cum_len_km)
+
+stable_cool[stable_cool$cum_len_km == max_dist_stable_cool, 1]
+stable_cool[stable_cool$station_id == "JLF", 18]
+stable_cool[stable_cool$station_id == "NFH", 18]
+
+
 # assign color palette based on classifications:
 thermCols <- data.frame(k5_group_id = c(1:5),
                         k5_names  = c("1-stable warm", "2-variable warm",
@@ -632,9 +645,11 @@ data_k_dist %>% st_drop_geometry() %>%
   group_by(k_5, k5_names) %>% 
   ggplot() + geom_histogram(aes(x=cum_len_km, fill=color), 
                             binwidth = 3, bins = 50) +
-  facet_wrap(k5_names~.) + theme_clean()
+  facet_wrap(k5_names~.) + 
+  labs(x= "distance below dam (km)") +
+  theme_clean()
 
-ggsave("output/figures/12_hist_dist_to_dam_by_stable_cool_variable_warm.png", width = 8, height = 6, units = "in", dpi = 300)
+ggsave("output/figures/12_hist_dist_to_dam_by_stable_cool_variable_warm.png", width = 8, height = 6, units = "in", dpi = 600)
 
 # 09: STATIC MAP FOR k=5 --------------------------------------------------------------
 
