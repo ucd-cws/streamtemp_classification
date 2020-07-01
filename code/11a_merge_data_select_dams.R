@@ -85,7 +85,8 @@ table(data_k$k5_names)
 # Add Centroid Distance Data -------------------------------------------------
 
 # add the centroid dist data:
-load("output/models/10b_dist_to_centroids_class2_4.rda")
+load("output/models/10b_dist_to_centroids_all_classes.rda")
+#load("output/models/10b_dist_to_centroids_class2_4.rda")
 
 # now join with full data set
 data_k <- left_join(data_k, class_cent_df)
@@ -102,6 +103,7 @@ data_k_sf_w_hydro_regions %>%
 
 hydro_regions %>% 
   count(HR_NAME)
+
 ## SAVE?
 save(data_k_sf_w_hydro_regions, file = "output/11a_agnes_k_5_final_w_centdist.rda")
 
