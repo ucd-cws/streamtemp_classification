@@ -593,7 +593,7 @@ ggmap(map4)
 # save as an object for later
 save(map4, file = "output/13d_ggmap_base_layer_map4.rda")
 
-# use these symbols:15, 16, 17, 18, 8
+# map
 (map_pan_4 <- ggmap(map4) +
       #coord_sf(label_axes = "--EN", datum = 4326) +
       geom_sf(data=rivs, lwd=0.1, color="dodgerblue", 
@@ -635,10 +635,10 @@ save(map4, file = "output/13d_ggmap_base_layer_map4.rda")
                         guide=guide_legend(order=2)) +
       scale_shape_manual("Thermal \nClasses", 
                          #values=c(22, 21, 24, 23, 8),
-                         values=c(21, 24, 23, 8),
+                         values=c(24, 23),
                          guide=guide_legend(order=1)) +
       scale_fill_manual("Thermal \nClasses", 
-                        values=thermCols$color[2:5],
+                        values=thermCols$color[3:4],
                         guide=guide_legend(override.aes = list(size=4), order=1)) +
       
       theme_map(base_family = "Roboto Condensed", base_size = 14) +
