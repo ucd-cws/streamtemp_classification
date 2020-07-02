@@ -614,6 +614,12 @@ stable_cool[stable_cool$cum_len_km == max_dist_stable_cool, 1]
 stable_cool[stable_cool$station_id == "JLF", 18]
 stable_cool[stable_cool$station_id == "NFH", 18]
 
+variable_warm <- data_k_dist %>% 
+  filter(k5_names == "2-variable warm") %>% 
+  filter(!is.na(cum_len_km)) %>% 
+  arrange(cum_len_km)
+
+
 
 # assign color palette based on classifications:
 thermCols <- data.frame(k5_group_id = c(1:5),
