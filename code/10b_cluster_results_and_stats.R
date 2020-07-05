@@ -228,11 +228,28 @@ save(class_cent_df, file = "output/models/10b_dist_to_centroids_class2_4.rda")
 
 save(class_cent_df, file = "output/models/10b_dist_to_centroids_all_classes.rda")
 
+load(file = "output/models/10b_dist_to_centroids_all_classes.rda")
 
 
-# hist of distances
+# Weak member analysis ----------------------------------------------------
+group_2_members <- class_cent_df %>% 
+  filter(cluster == "2")
+
+summary(group_2_members)
+
+group_3_members <- class_cent_df %>% 
+  filter(cluster == "3")
+  
+summary(group_3_members)
+
+group_4_members <- class_cent_df %>% 
+  filter(cluster =="4")
+
+summary(group_4_members)
+
 hist(class_cent_df$dist_to_centroid)
 
+# hist of distances
 # PCA
 ann_metrics_v2 <- ann_metrics %>% 
   left_join(., class_cent_df[,c(1,5,6)]) %>% 
@@ -251,3 +268,54 @@ mapview(data_sf, zcol="k_5", col.regions=c("#E41A1C", "#FF7F00", "#984EA3", "#4D
   mapview(data_sf %>% 
             filter(dist_to_centroid <15), 
           zcol="dist_to_centroid", cex="dist_to_centroid")
+
+
+# Reclassify for k=6 ------------------------------------------------------
+hc2 <- agnes(d1, method = "ward")
+hc2$ac
+
+# plot and add clusters
+pltree(hc2, cex = 0.6, hang = -1, main = "Dendrogram {agnes}: Wards") 
+rect.hclust(hc2, k = 6, border = viridis::viridis(5))
+
+# the groups out
+hc2_grps_k6 <- cutree(hc2, k=6) # try k=5
+table(hc2_grps_k6)
+
+# plot without labels
+ggclust2_6 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k6), geom="point")
+
+# plot with text labels
+ggclust2_k6 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k6), geom=c("point", "text"))
+
+# gg pca plot
+ggclust2_k6 + theme_classic() +
+  labs(title = "Clusters for CA Thermal Regimes (k=6)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = "")))
+
+# thermColor scale - all formatting was done on the fly; needs to be checked if figure will be used in the paper
+thermCols <- data.frame(k6_group_id = c(1,3,4,2,5,6),
+                        k6_names  = c("stable warm", "variable warm",
+                                      "stable cool", "variable cool",
+                                      "stable cold", "new cluster"),
+                        color = I(c("#E41A1C", #stable warm
+                                    "#FF7F00", #variable warm
+                                    "#984EA3", #stable cool
+                                    "#4DAF4A", #variable cool
+                                    "#377EB8", #stable cold
+                                    "#984EA3" #new cluster
+                        )))
+
+# check
+ggclust2_k6 + theme_classic() +
+  scale_fill_manual("Thermal \nClasses", values=thermCols$color, 
+                    labels=thermCols$k5_names)+
+  scale_color_manual("Thermal \nClasses", values=thermCols$color,
+                     labels=thermCols$k5_names)+
+  scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8,20),
+                     labels=thermCols$k5_names)+
+  labs(title = "Clusters for CA Thermal Regimes (k=6)") +
+  guides(fill = guide_legend(
+    override.aes = aes(label = "")))
+
