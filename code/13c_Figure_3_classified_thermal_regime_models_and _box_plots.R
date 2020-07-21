@@ -114,7 +114,7 @@ thermCols <- with(ann_metrics_k,
     annotate("text", y=16, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
     annotate("text", y=14.5, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
     annotate("text", y=13, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
-    labs(y=expression("annual mean " (degree*C)), x="") +
+    labs(x="thermal class", y=expression("annual mean " (degree*C)), x="") +
     theme(axis.text.x = element_blank(),
           legend.position = c(0.85,0.8)))
 
@@ -127,7 +127,7 @@ thermCols <- with(ann_metrics_k,
    annotate("text", y=260, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
    annotate("text", y=260, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
    annotate("text", y=165, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
-   labs(y="day of annual max", x="") +
+   labs(y="day of annual max", x="thermal class") +
    theme(axis.text.x = element_blank()))
 
 
@@ -141,7 +141,7 @@ thermCols <- with(ann_metrics_k,
    annotate("text", y=6.9, x=3, label="stable\ncool", color=thermCols$color[3], cex=2, fontface=2)+
    annotate("text", y=4, x=4, label="variable\ncool", color=thermCols$color[4], cex=2, fontface=2)+
    annotate("text", y=2.2, x=5, label="stable cold", color=thermCols$color[5], cex=2, fontface=2)+
-   labs(y=expression("annual amplitude " (degree*C)), x="") + 
+   labs(x="thermal class",y=expression("annual amplitude " (degree*C)), x="") + 
    theme(axis.text.x = element_blank()))
 
 (fig_row_2 <- plot_grid(gg1, gg2, gg3, labels = c("B", "C", "D"), ncol = 3, vjust = -0.25, hjust = -1.5))
