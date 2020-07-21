@@ -90,15 +90,17 @@ ggplot(data = model_out) +
   labs(x = "julian day", y = "daily mean stream temperature, deg C") +
   theme_classic()
 
-### YAY!!! It works. Next steps: 
-# Model all sites
-# Save model coefficients for each site
-# Review Maheu et al. (2015) and ID metrics to extract from each model for classification analysis
- # - annual amplitude (annual max - annual mean)
- # - day of annual maximum
- # - annual mean
+### YAY!!! It works.
 
 # Save Out ----------------------------------------------------------------
 
 write_csv(model_out, path = "output/models/thermal_regime_models_daily.csv")
 save(model_out, file = "output/models/thermal_regime_models_daily.rda")
+
+# Analyze model fit and residuals -----------------------------------------
+
+# Test code to find R-squared of df1, the model of a single site
+
+rsquared(m1) #this did not seem to work
+summary(m1)
+summary(model_df) #This also did not work
