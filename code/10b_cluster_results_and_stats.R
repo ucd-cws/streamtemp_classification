@@ -236,6 +236,7 @@ group_2_members <- class_cent_df %>%
   filter(cluster == "2")
 
 summary(group_2_members)
+hist(group_2_members$dist_to_centroid)
 
 group_3_members <- class_cent_df %>% 
   filter(cluster == "3")
@@ -246,6 +247,7 @@ group_4_members <- class_cent_df %>%
   filter(cluster =="4")
 
 summary(group_4_members)
+hist(group_4_members$dist_to_centroid)
 
 hist(class_cent_df$dist_to_centroid)
 
