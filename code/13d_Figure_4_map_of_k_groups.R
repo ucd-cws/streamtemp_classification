@@ -657,6 +657,7 @@ ggsave(filename="output/figures/Fig_4_classification_map_cent_dist_panel_4.png",
 
 # PANEL 5: CENTROID DIST MAP -----------------------------------------------------
 
+# fix shasta dam site to be just label
 
 # make a bounding box in lat/lon
 (mapRange5 <- c(range(st_coordinates(panel_areas[5,])[,1]),range(st_coordinates(panel_areas[5,])[,2])) +
