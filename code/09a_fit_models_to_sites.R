@@ -73,7 +73,8 @@ set.seed(777)
 model_out <- model_df %>%
   split(.$station_id) %>% # split by site ID
   map(., ~mutate(.data = .x, 
-                 model_avg_daily_temp_C = solve_thermal_model(obs_data = .x)))
+                 model_avg_daily_temp_C = solve_thermal_model(obs_data = .x))
+      )
 
 # SUPER FAST!!!
 
@@ -99,8 +100,67 @@ save(model_out, file = "output/models/thermal_regime_models_daily.rda")
 
 # Analyze model fit and residuals -----------------------------------------
 
-# Test code to find R-squared of df1, the model of a single site
+# what kind of object is this?
+class(m1)
 
-rsquared(m1) #this did not seem to work
+# summary of the model object
 summary(m1)
-summary(model_df) #This also did not work
+# full list of residuals by day!
+residuals(summary(m1))
+# coefficents
+coef(summary(m1))
+
+# to save all these summary stats we can write to object and then access:
+out <- summary(m1)
+
+names(out)
+
+# residual standard error (or really standard deviation) is positive square root of the mean square error
+# "sigma" = resid standard error, we can use the following:
+summary(m1)$sigma
+
+# Purrr over our data and get sigma --------------------------------------------
+
+sigma_out <- model_df %>%
+  split(.$station_id) %>% # split by site ID
+  map(., ~mutate(.data = .x, 
+                 sigma = summary(thermal_regime_model(.x))$sigma)
+  )
+
+# flatten back into a dataframe by binding rows
+sigma_out <- sigma_out %>% bind_rows() 
+
+# make a single dataframe with just site and sigma
+sigma_df <- sigma_out %>% select(station_id, sigma) %>% 
+  distinct(station_id, .keep_all = TRUE)
+
+# make sure all sites represented (n=77)
+length(unique(sigma_out$station_id)) == nrow(sigma_df)
+
+
+# Plot! -------------------------------------------------------------------
+
+library(ggthemes)
+
+# bring in classification data:
+load("output/12_data_k_centdist_damdist.rda")
+data_k_dist <- data_k_dist %>% sf::st_drop_geometry()
+
+# join with sigma
+sigma_df <- sigma_df %>% left_join(., data_k_dist, by="station_id")
+
+# stacked histogram
+ggplot(data=sigma_df) + 
+  geom_histogram(aes(x=sigma, fill=color), bins = 40) +
+  labs(x= "sigma") +
+  theme_clean()
+
+# faceted histogram
+ggplot(data=sigma_df) + 
+  geom_histogram(aes(x=sigma, fill=color), bins=40) +
+  labs(x= "sigma") +
+  facet_grid(k5_names~.)+
+  theme_clean()
+
+ggsave("output/figures/09a_fig_residual_standard_error_vert.png", width = 8, height = 6, units = "in", dpi = 300)
+
