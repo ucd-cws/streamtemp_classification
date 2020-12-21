@@ -149,6 +149,8 @@ data_k_dist <- data_k_dist %>% sf::st_drop_geometry()
 # join with sigma
 sigma_df <- sigma_df %>% left_join(., data_k_dist, by="station_id")
 
+table(sigma_df$k_5)
+
 # stacked histogram
 ggplot(data=sigma_df) + 
   geom_histogram(aes(x=sigma, fill=color), bins = 40) +
