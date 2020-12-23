@@ -24,11 +24,8 @@ load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 load("data/all_gages.rda")
 
 #This has date year range for CDEC stations, for all observations:
-load("data/cdec_temps_all_Daily_filt8yr.rda")
-
-#Still need total number of years for all stations. Can add this to the table I'm setting up with the site information and model metrics.
-
-
+cdec_metadata <- read_csv("data/cdec_stations_metadata_filt8yr.csv")
+load("data/cdec_stations_completed.rda")
 
 # Filter data to build Table 1 --------------------------------------------
 
@@ -43,9 +40,36 @@ all_data_no_range <- left_join(data_k_no_sf,ann_metrics)
 
 all_data_usgs_range <- left_join(all_data_no_range,all_gages_no_sf)
 
-#filter cdec_temps_day so that there's a single observation for each site, then combine with all_data_no_range; or figure out how to do a partial join based on a vlookup type of command
+#wrangle cdec data to get sites with no duplicates
+cdec_metadata <- cdec_metadata %>%
+  select(site_id, interval_id, date_begin, date_end) %>% 
+  rename(interval = interval_id)
 
+cdec_all_data <- left_join(station_list,cdec_metadata)
 
-#filter all_data to include columns ordered for the final table.
-filtered_data <- all_data %>% 
-  select(station_id, site_name, lon, lat, operator, HR_NAME, k5_names, ann_mean, ann_max, DOWY)
+#convert class type in cdec_info so that date_begin and date_end match all_data_usgs_range
+cdec_all_data$date_begin <- as.character(cdec_all_data$date_begin)
+cdec_all_data$date_end <- as.character(cdec_all_data$date_end)
+cdec_all_data <- cdec_all_data %>% 
+  rename(station_id = site_id)
+
+all_data_usgs_cdec_range <- left_join(all_data_usgs_range, cdec_all_data, by = "station_id")
+
+#clean columns
+
+all_data_usgs <- all_data_usgs_cdec_range %>% 
+  filter(data_source == "USGS") %>% 
+  rename(date_begin = date_begin.x) %>% 
+  rename(date_end = date_end.x) %>% 
+  select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
+
+all_data_cdec <- all_data_usgs_cdec_range %>% 
+  filter(data_source == "CDEC") %>% 
+  rename(date_begin = date_begin.y) %>% 
+  rename(date_end = date_end.y) %>% 
+  select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
+
+all_sites_final <- rbind(all_data_usgs, all_data_cdec)
+
+#SAVE!!!
+write_csv(all_sites_final, "output/all_sites_metadata_model_results.csv")
