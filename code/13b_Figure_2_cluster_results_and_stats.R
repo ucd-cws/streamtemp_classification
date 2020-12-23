@@ -17,8 +17,8 @@ library(ggplotify)
 
 # Figure 2a: the x-y plot of clustered thermal regimes --------------------
 
-load("output/models/annual_cluster_metrics_all_gages.rda")
-load("output/models/agnes_k_groups_final.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
+load("output/models/10a_agnes_k_groups_final.rda")
 
 # DROP CANAL SITE ---------------------------------------------------------
 
@@ -73,10 +73,10 @@ hc_grps_k5 <- cutree(hc, k=5) # try k=5
 table(hc_grps_k5)
 
 # plot without labels
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc_grps_k5), geom="point", xlab = "PC 1 (59.8%)", ylab = "PC 2 (28.8%)")
 
 # plot with text labels
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
+ggclust2_k5_w_lab <- fviz_cluster(list(data=d1, cluster=hc_grps_k5), geom=c("point", "text"))
 
 # gg pca plot
 ggclust2_k5 + theme_classic() +
