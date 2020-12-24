@@ -140,8 +140,10 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 
 # Make final plots --------------------------------------------------------
 
-fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
+#fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
 
 plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1,1), rel_widths = c(1,.5,.5))
 
 ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 600)
+
+ggsave("output/figures/PLOS_ONE/Fig3.tif", device = "tiff", width = 4, height = 4.5, units = "in", dpi = 400)
