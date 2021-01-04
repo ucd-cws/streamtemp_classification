@@ -17,8 +17,8 @@ library(ggplotify)
 
 # Figure 2a: the x-y plot of clustered thermal regimes --------------------
 
-load("output/models/annual_cluster_metrics_all_gages.rda")
-load("output/models/agnes_k_groups_final.rda")
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
+load("output/models/10a_agnes_k_groups_final.rda")
 
 # DROP CANAL SITE ---------------------------------------------------------
 
@@ -73,10 +73,10 @@ hc_grps_k5 <- cutree(hc, k=5) # try k=5
 table(hc_grps_k5)
 
 # plot without labels
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom="point")
+ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc_grps_k5), geom="point", xlab = "PC 1 (59.8%)", ylab = "PC 2 (28.8%)")
 
 # plot with text labels
-ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc2_grps_k5), geom=c("point", "text"))
+ggclust2_k5_w_lab <- fviz_cluster(list(data=d1, cluster=hc_grps_k5), geom=c("point", "text"))
 
 # gg pca plot
 ggclust2_k5 + theme_classic() +
@@ -140,8 +140,10 @@ p2 <- fviz_nbclust(ann_metrics_s, FUN = hcut, method = "silhouette",
 
 # Make final plots --------------------------------------------------------
 
-fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
+#fig_row_2 <- plot_grid(plot_CHIndex, plot_wss, labels = c("B", "C"), nrow = 1)
 
 plot_grid(plot_pc_k5, p4, labels = c("A"), nrow = 2, rel_heights = c(1.5,1,1), rel_widths = c(1,.5,.5))
 
 ggsave("output/figures/Fig_2_cluster_results_and_stats_v2.jpeg", width = 10, height = 8, units="in", dpi = 600)
+
+ggsave("output/figures/PLOS_ONE/Fig3.tif", device = "tiff", width = 4, height = 4.5, units = "in", dpi = 400)

@@ -96,8 +96,11 @@ ggplot() +
   ggthemes::scale_color_pander()+
   ggdark::dark_theme_bw(base_family = "Roboto Condensed", base_size = 8)
 
+save(cdec_info, file = "output/cdec_gage_info_not_filtered.rda")
 ggsave(filename = "output/figures/cdec_gage_year_ranges_by_interval.pdf", 
        width=11, height = 9.5, units = "in", device = cairo_pdf)
+
+
 
 # now filter to data where gages have >8 yrs of data (minimum req is 8.5)
 cdec_filt <- cdec_info %>% filter(yr_total > 8)

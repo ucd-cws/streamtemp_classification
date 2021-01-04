@@ -151,18 +151,23 @@ sigma_df <- sigma_df %>% left_join(., data_k_dist, by="station_id")
 
 table(sigma_df$k_5)
 
+sigma_0_1 <- sigma_df %>% 
+  filter(sigma < 1.0)
+
 # stacked histogram
 ggplot(data=sigma_df) + 
-  geom_histogram(aes(x=sigma, fill=color), bins = 40) +
+  geom_histogram(aes(x=sigma), bins = 40) + #can plot by regime using aes(x=sigma, fill=color)
   labs(x= "sigma") +
   theme_clean()
 
 # faceted histogram
-ggplot(data=sigma_df) + 
-  geom_histogram(aes(x=sigma, fill=color), bins=40) +
-  labs(x= "sigma") +
-  facet_grid(k5_names~.)+
-  theme_clean()
+# ggplot(data=sigma_df) + 
+#   geom_histogram(aes(x=sigma, fill=color), bins=40) +
+#   labs(x= "sigma") +
+#   facet_grid(k5_names~.)+
+#   theme_clean()
 
-ggsave("output/figures/09a_fig_residual_standard_error_vert.png", width = 8, height = 6, units = "in", dpi = 300)
+ggsave("output/figures/09a_fig_residual_standard_error_vert.png", width = 8, height = 6, units = "in", dpi = 600)
 
+write_csv(sigma_df, path = "output/models/thermal_regime_models_daily_w_sigma.csv")
+save(model_out, file = "output/models/thermal_regime_models_daily_w_sigma.rda")

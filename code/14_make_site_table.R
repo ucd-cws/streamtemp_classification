@@ -1,0 +1,75 @@
+
+# Code description --------------------------------------------------------
+
+# This code compiles the information generated during the analysis for each of the 77 stream sites and identifies:
+
+# -stream ID, site name,  lon, lat, operator, hydro_region, year range, k5_names, annual mean, annual max, and DOWY.
+
+
+# Libraries ---------------------------------------------------------------
+
+library(tidyverse)
+library(sf)
+
+
+# Load data ---------------------------------------------------------------
+
+#This 11a data includes station_id, k5_names, site_name, lon, lat, operator, and HR_NAME
+load("output/11a_agnes_k_5_final_w_centdist.rda") 
+
+#This 09b data includes station_id, and model results for annual mean, annual max, DOWY
+load("output/models/09b_annual_cluster_metrics_all_gages.rda")
+
+#This data has date begin/end columns for usgs filled in, but not CDEC
+load("data/all_gages.rda")
+
+#This has date year range for CDEC stations, for all observations:
+cdec_metadata <- read_csv("data/cdec_stations_metadata_filt8yr.csv")
+load("data/cdec_stations_completed.rda")
+
+# Filter data to build Table 1 --------------------------------------------
+
+#drop geometry from data_k_sf dataframe
+data_k_no_sf <- st_set_geometry(data_k_sf_w_hydro_regions, NULL)
+
+all_gages_no_sf <- all_gages %>% 
+  rename(station_id = site_id) %>% 
+  st_set_geometry(NULL)
+
+all_data_no_range <- left_join(data_k_no_sf,ann_metrics)
+
+all_data_usgs_range <- left_join(all_data_no_range,all_gages_no_sf)
+
+#wrangle cdec data to get sites with no duplicates
+cdec_metadata <- cdec_metadata %>%
+  select(site_id, interval_id, date_begin, date_end) %>% 
+  rename(interval = interval_id)
+
+cdec_all_data <- left_join(station_list,cdec_metadata)
+
+#convert class type in cdec_info so that date_begin and date_end match all_data_usgs_range
+cdec_all_data$date_begin <- as.character(cdec_all_data$date_begin)
+cdec_all_data$date_end <- as.character(cdec_all_data$date_end)
+cdec_all_data <- cdec_all_data %>% 
+  rename(station_id = site_id)
+
+all_data_usgs_cdec_range <- left_join(all_data_usgs_range, cdec_all_data, by = "station_id")
+
+#clean columns
+
+all_data_usgs <- all_data_usgs_cdec_range %>% 
+  filter(data_source == "USGS") %>% 
+  rename(date_begin = date_begin.x) %>% 
+  rename(date_end = date_end.x) %>% 
+  select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
+
+all_data_cdec <- all_data_usgs_cdec_range %>% 
+  filter(data_source == "CDEC") %>% 
+  rename(date_begin = date_begin.y) %>% 
+  rename(date_end = date_end.y) %>% 
+  select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
+
+all_sites_final <- rbind(all_data_usgs, all_data_cdec)
+
+#SAVE!!!
+write_csv(all_sites_final, "output/all_sites_metadata_model_results.csv")
