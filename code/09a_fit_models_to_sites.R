@@ -149,6 +149,8 @@ data_k_dist <- data_k_dist %>% sf::st_drop_geometry()
 # join with sigma
 sigma_df <- sigma_df %>% left_join(., data_k_dist, by="station_id")
 
+table(sigma_df$k_5)
+
 sigma_0_1 <- sigma_df %>% 
   filter(sigma < 1.0)
 
