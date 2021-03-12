@@ -1,6 +1,6 @@
 # Code description --------------------------------------------------------
 
-# Figure 4: Map of study locations and k-5 clusters in CA.
+# Figure 5: Map of study locations and k-5 clusters in CA.
 
 # Libraries ---------------------------------------------------------------
 
@@ -12,6 +12,14 @@ library(mapview)
 library(purrr)
 library(ggrepel)
 #library(wateRshedTools)
+
+# setup some basemaps
+mapbases <- c("Stamen.TonerLite", 
+              "CartoDB.PositronNoLabels", "OpenStreetMap",
+              "Esri.WorldImagery", "Esri.WorldTopoMap")
+# and set defaults
+mapviewOptions(basemaps=mapbases, fgb = FALSE)
+
 
 # LOAD DATA ---------------------------------------------------------------
 
@@ -40,6 +48,9 @@ load("output/13d_rivers_ca_streamorder_6.rda")
 load("output/12_selected_nhd_gage_mainstems.rda") # mainstems from gages
 mainstems_gage_all <- mainstems_gage_all %>% st_transform(crs_proj)
 
+# Panels ------------------------------------------------------------------
+
+
 # load("output/dam_panel_areas.rda")
 # # fix and save:
 # panel_areas <- panel_areas$finished %>% st_set_crs(4326) %>% 
@@ -50,12 +61,40 @@ mainstems_gage_all <- mainstems_gage_all %>% st_transform(crs_proj)
 #save(panel_areas,file = "output/dam_panel_areas_revised.rda")
 load("output/dam_panel_areas_revised.rda")
 
-mapview(panel_areas) + 
-   mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
-           layer.name="Thermal Classes",
-           col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
-           alpha.regions=0.8, cex=3.5,
-           hide=FALSE, homebutton=FALSE)
+# add panel names
+panel_areas <- panel_areas %>% 
+   mutate(panel_name= case_when(
+      panelID==5 ~ "A",
+      panelID==4 ~ "B", 
+      panelID==3 ~ "C",
+      panelID==2 ~ "D",
+      panelID==1 ~ "E"
+      ))
+
+# make UTM for easier buffer
+panel_areas <- panel_areas %>% st_transform(3310)
+
+# buffer panel E slightly (50 km)
+panel_areas_1 <- panel_areas[1, ] %>% st_make_grid(., n = 1) %>% st_buffer(dist = 20000, endCapStyle = "FLAT", joinStyle = "MITRE", nQuadSegs = 1) %>% st_as_sf()
+panel_areas[1,3] <- panel_areas_1
+
+panel_areas <- st_transform(panel_areas, 4326)
+
+# add centroid labels
+panel_areas <- panel_areas %>% 
+   # add centroid values for labels using the geometry column
+   mutate(lon=map_dbl(geometry, ~st_centroid(.x)[[1]]), 
+          lat=map_dbl(geometry, ~st_centroid(.x)[[2]])) 
+
+rm(panel_areas_1)
+
+# preview
+# mapview(panel_areas, zcol="panel_name") + 
+#    mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
+#            layer.name="Thermal Classes",
+#            col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
+#            alpha.regions=0.8, cex=3.5,
+#            hide=FALSE, homebutton=FALSE)
 
 # Tidy Data ---------------------------------------------------------------
 
@@ -88,30 +127,22 @@ thermCols <- data.frame(k5_group_id = c(1:5),
 # check levels
 levels(data_k_dist$k5_names)
 
-# setup some basemaps
-mapbases <- c("Stamen.TonerLite", 
-              "CartoDB.PositronNoLabels", "OpenStreetMap",
-              "Esri.WorldImagery", "Esri.WorldTopoMap")
-# and set defaults
-mapviewOptions(basemaps=mapbases)
+# Get and Crop Rivers by State --------------------------------------------
 
 # get CA and County Boundaries
 ca <- USAboundaries::us_boundaries(type="state", states="ca", resolution = "high")
 ca_co <- USAboundaries::us_counties(states="ca") %>% st_transform(crs_proj)
 
 # crop rivs by ca
-rivs <- st_intersection(rivs, st_transform(ca, crs_proj))
+rivs <- st_intersection(rivs, st_transform(ca$geometry, crs_proj)) %>% st_transform(4326)
 
 # crop the other rivers data set
-rivers_ca <- st_transform(rivers, st_crs(ca)) %>% st_intersection(., ca)
+rivers_ca <- st_transform(rivers, st_crs(ca)) %>% st_intersection(., ca$geometry)
 #summary(rivers_ca$streamorde)
 
-#plot(ca$geometry, border="gray40")
-#plot(rivers_ca$geometry, col="steelblue", lwd = (rivers_ca$streamorde / 4), add=TRUE)
-
-# now fix the CRS
-ca <- ca %>% st_transform(crs_proj)
-rivers_ca <- rivers_ca %>% st_transform(crs_proj)
+plot(ca$geometry, border="gray40")
+plot(rivers_ca$geometry, col="steelblue", lwd = (rivers_ca$streamorde / 4), add=TRUE)
+plot(rivs$Shape, col="dodgerblue", lwd = 0.2, add=TRUE)
 
 # Get Major Streams for CA ------------------------------------------------
 # 
@@ -171,24 +202,33 @@ rivers_ca <- rivers_ca %>% st_transform(crs_proj)
 
 # transform a few layers
 ca <- st_transform(ca, 4326)
-rivers_ca <- st_transform(rivers_ca, 4326)
-rivs <- st_transform(rivs, 4326)
-mainstems_gage_all <- st_transform(mainstems_gage_all, 4326)
-dams_final <- st_transform(dams_final, 4326)
+
+# crop CA for just points:
 data_k_dist <- st_transform(data_k_dist, 4326)
+data_k_bbox <- st_make_grid(data_k_dist, n = 1) %>% st_buffer(dist = 0.5)
+
+ca_crop <- st_intersection(ca, data_k_bbox) # rounded box
+#ca_crop <- st_crop(ca, st_bbox(data_k_dist)) # bbox
+hydro <- st_intersection(hydro, data_k_bbox)
+#mapview(data_k_bbox) + mapview(data_k_dist) + mapview(ca_crop)
+rivers_ca <- st_transform(rivers_ca, 4326) %>% st_intersection(., data_k_bbox)
+rivs <- st_transform(rivs, 4326) %>% st_intersection(., data_k_bbox)
+mainstems_gage_all <- st_transform(mainstems_gage_all, 4326) %>% st_intersection(., data_k_bbox)
+dams_final <- st_transform(dams_final, 4326)
 
 
 # use these symbols:15, 16, 17, 18, 8
 
-(map1 <- ggplot()+
+(map1 <- ggplot() +
       #coord_sf(label_axes = "--EN", datum = 4326) +
       geom_sf(data=hydro, aes(lty="Hydroregions"), color=alpha("black", 0.8), fill=NA, size=0.25) +
       scale_linetype_manual("", values = c("Hydroregions" = 2), 
                             guide = guide_legend(override.aes = list(color = "black", alpha=0.5, lwd=0.5), order=2)) +
       geom_sf(data=rivs, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3) +
-      #geom_sf(data=rivers_ca, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
+      geom_sf(data=rivers_ca, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.45) + 
       geom_sf(data=mainstems_gage_all, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9) + 
-      geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3) +
+      geom_sf(data=ca_crop, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3) +
+      geom_sf(data=panel_areas, fill = "gray", color="slategray", alpha=0.2) +
       geom_sf(data=dams_final, aes(fill="Dams"), pch=25, size=4.5, alpha=0.75) +
       scale_fill_manual("", values=c("Dams"="black"), 
                         guide = guide_legend(override.aes = list(alpha=1, order=2, lty=NA)))+
@@ -203,32 +243,46 @@ data_k_dist <- st_transform(data_k_dist, 4326)
               fill=thermCols$color[4], size = 3.5, alpha=0.97, show.legend = FALSE) +
       geom_sf(data = data_k_dist %>% filter(k5_names=="5-stable cold"), pch=8, 
               color="cyan", size = 3.7, show.legend = FALSE) +
+      # hydroregions labels
       geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), 
                       # need to tweak these individually, a bit annoying
-                      nudge_x = c(-1.2, # north coast, 
-                                  -0.6, # sf bay
-                                  1.3, # san joaq
-                                  0.1, # central coast
-                                  -0.1, # tulare
-                                  0, # south coast
-                                  0.9, # sacto
+                      nudge_x = c(-.2, # north coast, 
+                                  -0.5, # sf bay
+                                  1, # san joaq
+                                  -0.1, # central coast
+                                  -0.3, # tulare
+                                  0.8, # sacto
                                   0, # N lahontan
-                                  0.1, # S lahontan
-                                  0), # colorado
-                      nudge_y = c(0.5, 0, -0.15, 0, .1, 0, 0, 1, 0, 0),
+                                  -1), # S lahontan
+                      nudge_y = c(0.8, 0, -0.25, 0.4, 0.2, 0, 0.7, 2),
                       fontface="bold", family="Roboto Condensed",
                       segment.color="gray10",
-                      color = "black",     # text color
-                      bg.color = "grey90", # shadow color
-                      bg.r = 0.15,
-                      size=4.5,
+                      color = "gray25",     # text color
+                      bg.color = "gray90", # shadow color
+                      bg.r = 0.05,
+                      size=4,
                       box.padding = 0.5,
                       force=1.5,
-                      min.segment.length = 5,
+                      min.segment.length = 15,
                       #segment.inflect = FALSE, 
                       #segment.square=FALSE,
                       segment.ncp = 3,
                       segment.curvature = -0.1) +
+      # panel labels
+      geom_text_repel(data=panel_areas, aes(x=lon, y=lat, label=panel_name),
+                      fontface="bold.italic", family="Roboto Condensed",
+                      segment.color="gray10",
+                      color = "black",     # text color
+                      bg.color = "grey90", # shadow color
+                      bg.r = 0,
+                      size=6.5, force=1.5, min.segment.length = 10,
+                      nudge_x = c(0.2, # E 
+                                  0.34, # D
+                                  -0.3, # C 
+                                  -0.05, # B
+                                  -0.1), # A
+                      nudge_y = c(0.2, -0.2, 0.12, 0.05, -0.35)) +
+
       # add north arrow and scale bar
       annotation_north_arrow(location="br", 
                              width = unit(0.8,"cm"),
@@ -247,15 +301,14 @@ data_k_dist <- st_transform(data_k_dist, 4326)
       theme(legend.background = element_rect(fill = NA),
             #plot.background = element_rect(color="black", size = 0.5),
             legend.key = element_rect(color = NA, size=NA),
-            legend.position = c(0, 0.05), 
+            legend.position = c(0.02, 0.05), 
             legend.spacing.y = unit(0,"cm"),
             legend.margin = margin(0.1, 0, 0, 0, "cm"))
 )
 
 # save
-ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_all_rivers.pdf", dpi=300, width=8, height = 11.5, units="in", device=cairo_pdf)
-ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_all_rivers.png", dpi=300, width=8, height = 11.5, units="in")
-#ggsave(filename="output/figures/Fig_4_classification_map_hydroregions_rivers_select.pdf", dpi=300, width=8, height = 11.5, units="in", device=cairo_pdf)
+ggsave(filename="output/figures/Fig_5_classification_map_hydroregions_all_rivers.pdf", dpi=300, width=8.5, height = 11, units="in", device=cairo_pdf)
+ggsave(filename="output/figures/Fig_5_classification_map_hydroregions_all_rivers.png", dpi=300, width=8.5, height = 11, units="in")
 
 
 # ADD INSET ---------------------------------------------------------------
@@ -264,14 +317,14 @@ us <- USAboundaries::us_boundaries(type="state", resolution = "low") %>%
    filter(!state_abbr %in% c("PR", "AK", "HI"))
 
 # make a box around rivers (a grid with an n=1) for inset
-ca_box <- st_make_grid(ca, n = 1) #%>% st_centroid()
+ca_box <- st_make_grid(data_k_dist, n = 1) #%>% st_centroid()
 
 # Inset map: US
 (p2 <- ggplot() + 
    geom_sf(data = us, colour = "grey10", fill = "tan", alpha=0.4) +
    coord_sf() +
    theme_minimal() + 
-   geom_sf(data=ca_box, color="purple4", fill=NA, size=.8, alpha=0.7) +
+   geom_sf(data=ca_box, color="purple4", fill=NA, size=1.5, alpha=0.7) +
    labs(x = NULL, y = NULL) +
    theme(axis.text.x = element_blank(),
          axis.text.y = element_blank(),
@@ -279,7 +332,7 @@ ca_box <- st_make_grid(ca, n = 1) #%>% st_centroid()
          axis.title.x = element_blank(),
          axis.title.y = element_blank(),
          panel.grid.major = element_line(colour = "transparent"),
-         plot.background = element_rect(color = "black", fill="white"),
+         plot.background = element_rect(color = "white", fill="white"),
          #plot.background = element_blank(),
          panel.border = element_blank(),
          plot.margin = unit(c(0, 0, 0 ,0), "mm")))
@@ -295,51 +348,46 @@ library(gridExtra)
 
 # to save:
 #start from this first (may need to change to just "pdf" instead of "cairo_pdf")
-png(filename = "output/figures/Fig_4_classification_map_hydroregions_inset.png", width = 11, height = 8, units = "in", res = 300)
+jpeg(filename = "output/figures/Fig_5_classification_map_hydroregions_inset.jpg", width = 8.5, height = 11, units = "in", res = 300)
 
 # to just view, start from below here
 grid.newpage()
 mainmap <- viewport(width = 1, height = 1, x = 0.5, y = 0.5) # main map
-insetmap <- viewport(width = 0.32, height = 0.28, x = 0.7, y = 0.8) # inset
+insetmap <- viewport(width = 0.32, height = 0.28, x = 0.8, y = 0.8) # inset
 print(map1, vp = mainmap) 
 print(p2, vp = insetmap)
 
 # make sure to run this if saving out as pdf/png
 dev.off()
 
-# PANEL 1: CENTROID DIST MAP -----------------------------------------------------
+# PANEL E: CENTROID DIST MAP -----------------------------------------------------
 
-library(ggmap)
+# use ggspatial?
+# annotation_map_tile(zoom = 13, cachedir = system.file("rosm.cache", package = "ggspatial"))
+# see types here:
+# rosm::osm.types() osm, hillshade, cartolight,
 
 # make a bounding box in lat/lon
 (mapRange1 <- c(range(st_coordinates(panel_areas[1,])[,1]),range(st_coordinates(panel_areas[1,])[,2])))
 
-# this only works with an API KEY
-map1 <- get_map(location=c(mapRange1[1], mapRange1[3],mapRange1[2], mapRange1[4]), crop = F,
-                force=TRUE,
-                color="color", #color
-                maptype="terrain", # or color
-                source="google", # google
-                zoom=12)
-
-# save as an object for later
-save(map1, file = "output/13d_ggmap_base_layer_map1.rda")
-
-# quick view?
-ggmap(map1)
-
+# crop everything by panel_area 1 (E)
+rivs_E <- st_intersection(rivs, panel_areas[1,]$geometry)
+mainstems_gage_all_E <- st_intersection(mainstems_gage_all, panel_areas[1,]$geometry)
+dams_final_E <- st_crop(dams_final, panel_areas[1,]$geometry)
+data_k_dist_E <- st_crop(data_k_dist, panel_areas[1,]$geometry)
 
 # use these symbols:15, 16, 17, 18, 8
-(map_pan_1 <- ggmap(map1) +
-      #coord_sf(label_axes = "--EN", datum = 4326) +
-      geom_sf(data=rivs, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3, inherit.aes = FALSE) +
+(map_pan_E <- ggplot() +
+      annotation_map_tile(data=mainstems_gage_all_E, type = "hillshade", cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = F) +
+      #annotation_map_tile(data=rivs_E, zoomin = 0, type = "hikebike", cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = TRUE) +
+      geom_sf(data=rivs_E, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3, inherit.aes = FALSE) +
        
-      geom_sf(data=mainstems_gage_all, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9, inherit.aes = FALSE) + 
-      #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
-      geom_sf(data=dams_final, fill="black", pch=25, size=4.5, alpha=0.75, inherit.aes = FALSE) +
-      #geom_sf(data = data_k_dist, aes(fill = k5_names, shape=k5_names), size = 3.5, alpha=0.97) +
-      geom_text_repel(data=data_k_dist %>% filter(k5_names %in% c("2-variable warm")), 
-                      aes(x=lon, y=lat, label=station_id), inherit.aes = FALSE, 
+      geom_sf(data=mainstems_gage_all_E, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9, inherit.aes = FALSE) + 
+      
+      geom_sf(data=dams_final_E, fill="black", pch=25, size=4.5, alpha=0.75, inherit.aes = FALSE) +
+      #geom_sf(data = data_k_dist_E, aes(fill = k5_names, size=dist_to_centroid, shape=k5_names), size = 3.5, alpha=0.97) +
+      geom_text_repel(data=data_k_dist_E,
+                      aes(x=lon, y=lat, label=station_id), inherit.aes = FALSE,
                       fontface="bold", family="Roboto Condensed",
                       segment.color="gray10",
                       color = "white",     # text color
@@ -351,22 +399,22 @@ ggmap(map1)
                       force=1,
                       nudge_x = 0.03,
                       min.segment.length = 0.9,
-                      segment.inflect = FALSE, 
+                      segment.inflect = FALSE,
                       #segment.square=FALSE,
                       segment.ncp = 3,
                       segment.curvature = -0.1) +
-      
-      geom_sf(data = data_k_dist %>% filter(k5_names %in% c("2-variable warm")), 
-              aes(size=dist_to_centroid, fill=k5_names, shape=k5_names), color="black", 
-              alpha=0.97, show.legend = TRUE, inherit.aes = FALSE) +
-      # add north arrow and scale bar
-      annotation_north_arrow(location="br", 
-                             width = unit(0.8,"cm"),
-                             height=unit(1.2, "cm"),
-                             pad_y = unit(0.9, "cm")) +
-      annotation_scale(location="br") +
-      scale_size_binned("Centroid \nDistance",
+      geom_sf(data = data_k_dist_E %>% filter(k5_names %in% c("2-variable warm")), 
+               aes(size=dist_to_centroid, fill=k5_names, shape=k5_names), color="black", 
+               alpha=0.97, show.legend = TRUE, inherit.aes = FALSE) +
+      scale_size_binned("Centroid \nDistance", limits = c(3,6),range = c(1,8),
                         guide=guide_legend(order=2)) +
+      #add north arrow and scale bar
+   annotation_north_arrow(location="br", 
+                          width = unit(0.8,"cm"),
+                          height=unit(1.2, "cm"),
+                          pad_y = unit(0.9, "cm")) +
+      annotation_scale(location="br") +
+
       scale_shape_manual("Thermal \nClasses", 
                          #values=c(22, 21, 24, 23, 8),
                          values=c(21),
@@ -384,12 +432,17 @@ ggmap(map1)
             legend.spacing.y = unit(0.1,"cm"),
             legend.margin = margin(0.15, 0.1, 0.1, 0.2, "cm"))
 )
-      
+
+#E_legend <- cowplot::get_legend(map_pan_E) # save proper legend
+# save
+#save(E_legend, file="output/figures/legend_for_fig5_panel_E.rda")
+# save plot
+save(map_pan_E, file="output/figures/PLOS_ONE/figure5_panel_E.rda")
 
 # save
-ggsave(filename="output/figures/Fig_4_classification_map_cent_dist_panel_1.png", dpi=300, width=8, height = 6, units="in")
+ggsave(filename="output/figures/Fig_5E_classification_map_cent_dist.pdf", dpi=300, width=8, height = 6, units="in", device = cairo_pdf)
 
-# PANEL 2: CENTROID DIST MAP -----------------------------------------------------
+# PANEL D: CENTROID DIST MAP -----------------------------------------------------
 
 # panel 2 includes:
 sites2 <- c("GRF", "DNB", "H41", "FWQ")
@@ -399,36 +452,34 @@ pan2 <- data_k_dist %>% filter(station_id %in% sites2)
 (mapRange2 <- c(range(st_coordinates(pan2)[,1]),range(st_coordinates(pan2)[,2])) + 
       # add slight buffer around sites
       c(-0.05, .075, -0.05, 0.075))
+# make polygon
+pan2_bbx <- st_as_sfc(st_bbox(c(xmin = mapRange2[1], xmax = mapRange2[2], ymax = mapRange2[4], ymin = mapRange2[3]), crs = st_crs(4326)))
 
-# this only works with an API KEY
-map2 <- get_map(location=c(mapRange2[1], mapRange2[3], mapRange2[2], mapRange2[4]), 
-                crop = T,
-                force=TRUE,
-                #color="bw",
-                maptype = "terrain-background",
-                source="stamen",
-                color="color", 
-                #maptype="terrain", # or color
-                #source="google", # google
-                zoom=12, 
-                )
+# crop everything by panel_area 1 (E)
+rivs_D <- st_intersection(rivs, pan2_bbx)
+mainstems_gage_all_D <- st_intersection(mainstems_gage_all, pan2_bbx)
+dams_final_D <- st_crop(dams_final, pan2_bbx)
+data_k_dist_D <- st_crop(data_k_dist, pan2_bbx)
 
-# quick view?
-ggmap(map2)
 
-# save as an object for later
-save(map2, file = "output/13d_ggmap_base_layer_map2.rda")
-
+# test map?
+# (map_pan_D <- ggplot()+
+#       annotation_map_tile(data=pan2_bbx, zoomin = -1, type = "osm") +
+#    geom_sf(data=rivs_D, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3, inherit.aes = FALSE))
+   
+ 
 # use these symbols:15, 16, 17, 18, 8
-(map_pan_2 <- ggmap(map2) +
-      #coord_sf(label_axes = "--EN", datum = 4326) +
-      geom_sf(data=rivs, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3, inherit.aes = FALSE) +
+(map_pan_D <- ggplot()+
+      #annotation_map_tile(data=pan2_bbx, type = "osm", cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = F, alpha=0.9) +
+      annotation_map_tile(data=pan2_bbx, type = "hillshade", cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = TRUE, alpha=0.9) +
       
-      geom_sf(data=mainstems_gage_all, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9, inherit.aes = FALSE) + 
+    geom_sf(data=rivs_D, lwd=0.1, color="dodgerblue", show.legend = FALSE, alpha=0.3, inherit.aes = FALSE) +
+      
+      geom_sf(data=mainstems_gage_all_D, lwd=0.3, color="dodgerblue", show.legend = FALSE, alpha=0.9, inherit.aes = FALSE) + 
       #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
-      geom_sf(data=dams_final, fill="black", pch=25, size=4.5, alpha=0.75, inherit.aes = FALSE) +
+      geom_sf(data=dams_final_D, fill="black", pch=25, size=4.5, alpha=0.75, inherit.aes = FALSE) +
       #geom_sf(data = data_k_dist, aes(fill = k5_names, shape=k5_names), size = 3.5, alpha=0.97) +
-      geom_text_repel(data=data_k_dist %>% filter(k5_names %in% c("2-variable warm", "3-stable cool")), 
+      geom_text_repel(data=data_k_dist_D %>% filter(k5_names %in% c("2-variable warm", "3-stable cool")), 
                       aes(x=lon, y=lat, label=station_id), inherit.aes = FALSE, 
                       fontface="bold", family="Roboto Condensed",
                       segment.color="gray10",
@@ -446,7 +497,7 @@ save(map2, file = "output/13d_ggmap_base_layer_map2.rda")
                       segment.ncp = 3,
                       segment.curvature = -0.1) +
       
-      geom_sf(data = data_k_dist %>% filter(k5_names %in% c("2-variable warm", "3-stable cool")), 
+      geom_sf(data = data_k_dist_D %>% filter(k5_names %in% c("2-variable warm", "3-stable cool")), 
               aes(size=dist_to_centroid, fill=k5_names, shape=k5_names), color="black", 
               alpha=0.97, show.legend = TRUE, inherit.aes = FALSE) +
       # add north arrow and scale bar
@@ -455,7 +506,7 @@ save(map2, file = "output/13d_ggmap_base_layer_map2.rda")
                              height=unit(1.2, "cm"),
                              pad_y = unit(0.9, "cm")) +
       annotation_scale(location="br") +
-      scale_size_binned("Centroid \nDistance", breaks=c(seq(2,8,2)),
+      scale_size_binned("Centroid \nDistance", limits=c(4,8), breaks=c(seq(2,8,2)),
                         guide=guide_legend(order=2)) +
       scale_shape_manual("Thermal \nClasses", 
                          #values=c(22, 21, 24, 23, 8),
@@ -476,9 +527,13 @@ save(map2, file = "output/13d_ggmap_base_layer_map2.rda")
 
 
 # save
-ggsave(filename="output/figures/Fig_4_classification_map_cent_dist_panel_2.png", dpi=300, width=8, height = 6, units="in")
+save(map_pan_D, file="output/figures/PLOS_ONE/figure5_panel_D.rda")
 
-# PANEL 3: CENTROID DIST MAP -----------------------------------------------------
+# save
+ggsave(filename="output/figures/Fig_5D_classification_map_cent_dist.pdf", dpi=300, width=8, height = 6, units="in", device = cairo_pdf)
+
+
+# PANEL C: CENTROID DIST MAP -----------------------------------------------------
 
 # panel 3 includes:
 sites3 <- c("11303500", "11303000", "GMB", "ORA", "OBS", "GDC", "CLP")
@@ -569,7 +624,7 @@ save(map3, file = "output/13d_ggmap_base_layer_map3.rda")
 # save
 ggsave(filename="output/figures/Fig_4_classification_map_cent_dist_panel_3.png", dpi=300, width=8, height = 6, units="in")
 
-# PANEL 4: CENTROID DIST MAP -----------------------------------------------------
+# PANEL B: CENTROID DIST MAP -----------------------------------------------------
 
 
 # make a bounding box in lat/lon
@@ -655,7 +710,7 @@ save(map4, file = "output/13d_ggmap_base_layer_map4.rda")
 ggsave(filename="output/figures/Fig_4_classification_map_cent_dist_panel_4.png", dpi=300, width=8, height = 7, units="in")
 
 
-# PANEL 5: CENTROID DIST MAP -----------------------------------------------------
+# PANEL A: CENTROID DIST MAP -----------------------------------------------------
 
 # fix shasta dam site to be just label
 
