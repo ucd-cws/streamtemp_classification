@@ -361,7 +361,7 @@ print(p2, vp = insetmap)
 dev.off()
 
 ## TIFF
-tiff(filename = "output/figures/PLOS_ONE/Fig5_MainMap_hydroregions_inset.tiff", width = 7.5, height = 8, units = "in", res = 300)
+tiff(filename = "output/figures/PLOS_ONE/Fig5_MainMap_hydroregions_inset.tiff", width = 7.5, height = 8, units = "in", res = 200)
 
 # to just view, start from below here
 grid.newpage()
