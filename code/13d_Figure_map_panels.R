@@ -114,7 +114,7 @@ ggsave(filename="output/figures/PLOS_ONE/Fig5_E_classification_map_cent_dist.pdf
 ggsave(filename="output/figures/PLOS_ONE/Fig5_E_classification_map_cent_dist.tiff", dpi=300, 
        width=5.2, height = 3, units="in", scale = 1.3)
 
-  # PANEL D: CENTROID DIST MAP -----------------------------------------------------
+# PANEL D: CENTROID DIST MAP -----------------------------------------------------
 
 # panel 2 includes:
 sites2 <- c("GRF", "DNB", "H41", "FWQ")
@@ -220,7 +220,7 @@ dams_final_C <- st_crop(dams_final, pan3_bbx)
 data_k_dist_C <- st_crop(data_k_dist, pan3_bbx)
 
 # use these symbols:15, 16, 17, 18, 8
-(map_pan_3 <-
+(map_pan_C <-
     ggplot() +
     annotation_map_tile(data=pan3_bbx, type = "osm", zoomin = -1, cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = FALSE, alpha=0.8) +
     annotation_map_tile(data=pan3_bbx, type = "hillshade", zoom = 12, zoomin= -1,
@@ -282,7 +282,7 @@ data_k_dist_C <- st_crop(data_k_dist, pan3_bbx)
 )
 
 # save plot
-save(map_pan_D, file="output/figures/PLOS_ONE/figure_map_panel_C.rda")
+save(map_pan_C, file="output/figures/PLOS_ONE/figure_map_panel_C.rda")
 
 # save
 ggsave(filename="output/figures/PLOS_ONE/Fig5_C_classification_map_cent_dist.pdf", dpi=300, width=8, height = 6, units="in", device = cairo_pdf)
@@ -305,7 +305,7 @@ dams_final_B <- st_crop(dams_final, pan4_bbx)
 data_k_dist_B <- st_crop(data_k_dist, pan4_bbx)
 
 # map
-(map_pan_4 <- ggplot() +
+(map_pan_B <- ggplot() +
     
     # background
     annotation_map_tile(data=pan4_bbx, type = "osm", zoom = 11, cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = FALSE, alpha=0.8) +
@@ -367,7 +367,7 @@ data_k_dist_B <- st_crop(data_k_dist, pan4_bbx)
 
 
 # save plot
-save(map_pan_4, file="output/figures/PLOS_ONE/figure_map_panel_B.rda")
+save(map_pan_B, file="output/figures/PLOS_ONE/figure_map_panel_B.rda")
 
 # save
 ggsave(filename="output/figures/PLOS_ONE/Fig5_B_classification_map_cent_dist.pdf", dpi=300, width=8, height = 6, units="in", device = cairo_pdf)
@@ -394,7 +394,7 @@ dams_final_A <- st_crop(dams_final, pan5_bbx)
 data_k_dist_A <- st_crop(data_k_dist, pan5_bbx)
 
 # map
-(map_pan_5 <- ggplot() +
+(map_pan_A <- ggplot() +
     # background
     annotation_map_tile(data=pan5_bbx, type = "osm", zoom = 11, cachedir = system.file("rosm.cache", package = "ggspatial"), forcedownload = FALSE, alpha=0.8) +
     # river
@@ -465,7 +465,7 @@ data_k_dist_A <- st_crop(data_k_dist, pan5_bbx)
 
 
 # save plot
-save(map_pan_5, file="output/figures/PLOS_ONE/figure_map_panel_A.rda")
+save(map_pan_A, file="output/figures/PLOS_ONE/figure_map_panel_A.rda")
 
 # write out
 ggsave(filename="output/figures/PLOS_ONE/Fig5_A_classification_map_cent_dist.pdf", dpi=300, width=4, height = 8, units="in", device = cairo_pdf)
@@ -474,11 +474,39 @@ ggsave(filename="output/figures/PLOS_ONE/Fig5_A_classification_map_cent_dist.tif
        width=2.7, height = 5.5, units="in", scale = 1.3)
 
 
+# PATCHWORK  --------------------------------------------------------------
 
-# ARCHIVED CODE -----------------------------------------------------------
+library(patchwork)
 
+load("output/figures/PLOS_ONE/figure_map_panel_A.rda")
+load("output/figures/PLOS_ONE/figure_map_panel_B.rda")
+load("output/figures/PLOS_ONE/figure_map_panel_C.rda")
+load("output/figures/PLOS_ONE/figure_map_panel_D.rda")
+load("output/figures/PLOS_ONE/figure_map_panel_E.rda")
 
-# MAPVIEW MAP OF DIST TO CENTROID -----------------------------------------
+(map_pan_B2 <- map_pan_B + guides(color=FALSE, shape=FALSE, fill=FALSE, size=FALSE))
+ggsave(map_pan_B2, filename="output/figures/PLOS_ONE/Fig5_B_map_no_legned.tiff", dpi=250, 
+       width=5, height = 4.1, units="in", scale = 1.3)
+
+map_pan_C2 <- map_pan_C + guides(color=FALSE, shape=FALSE, fill=FALSE, size=FALSE)
+ggsave(map_pan_C2, filename="output/figures/PLOS_ONE/Fig5_C_map_no_legend.tiff", dpi=250, 
+       width=5, height = 4.1, units="in", scale = 1.3)
+
+map_pan_D2 <- map_pan_D + guides(color=FALSE, shape=FALSE, fill=FALSE, size=FALSE)
+ggsave(map_pan_D2, filename="output/figures/PLOS_ONE/Fig5_D_map_no_legend.tiff", dpi=300, 
+       width=5.2, height = 3, units="in", scale = 1.3)
+
+map_pan_E2 <- map_pan_E + guides(color=FALSE, shape=FALSE, fill=FALSE, size=FALSE)
+ggsave(map_pan_E2, filename="output/figures/PLOS_ONE/Fig5_E_map_no_legend.tiff", dpi=300, width=5.2, height = 3, units="in", scale = 1.3)
+
+full_plot <- map_pan_A + (map_pan_B2 + map_pan_C2)/(map_pan_D2 + map_pan_E2)
+  
+#plot_layout(guides = 'collect')
+
+ggsave(filename="output/figures/PLOS_ONE/Fig5_ALL_PANELS.tiff", dpi=300, 
+       width=7.5, height = 7, units="in", scale = 1.3)
+
+# ARCHIVED: MAPVIEW MAP OF DIST TO CENTROID -----------------------------------------
 
 library(mapview)
 
@@ -515,88 +543,4 @@ mfinalcent@map %>% leaflet::addMeasure(primaryLengthUnit = "meters")
 
 
 
-
-
-
-
-# GGMAP BACKGROUND --------------------------------------------------------
-
-library(ggmap)
-
-# make a bounding box in lat/lon
-mapRange1 <- st_transform(ca, 4326) 
-(mapRange1 <- c(range(st_coordinates(mapRange1)[,1]),range(st_coordinates(mapRange1)[,2])))
-
-# this only works with an API KEY
-map3 <- get_map(location=c(mapRange1[1], mapRange1[3],mapRange1[2], mapRange1[4]), crop = F,
-                color="bw",
-                maptype="terrain-background",
-                source="stamen",
-                zoom=8)
-# save as an object for later
-ggmap_base_z8 <- map3
-save(ggmap_base_z8, file = "output/13d_ggmap_base_layer_zoom8.rda")
-
-# quick view?
-ggmap(map3)
-#ggmap(ggmap_base)
-
-# Define a function to fix the bbox to be in EPSG:3857
-#  ggmap_bbox <- function(map) {
-#    if (!inherits(map, "ggmap")) stop("map must be a ggmap object")
-#    # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
-#    # and set the names to what sf::st_bbox expects:
-#    map_bbox <- setNames(unlist(attr(map, "bb")), 
-#                         c("ymin", "xmin", "ymax", "xmax"))
-#    
-#    # Convert the bbox to an sf polygon, transform it to 3857, 
-#    # and convert back to a bbox (convoluted, but it works)
-#    bbox_3310 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3310))
-#    
-#    # Overwrite the bbox of the ggmap object with the transformed coordinates 
-#    attr(map, "bb")$ll.lat <- bbox_3310["ymin"]
-#    attr(map, "bb")$ll.lon <- bbox_3310["xmin"]
-#    attr(map, "bb")$ur.lat <- bbox_3310["ymax"]
-#    attr(map, "bb")$ur.lon <- bbox_3310["xmax"]
-#    map
-# }
-# Use the function:
-# test_map <- ggmap_bbox(map3)
-# ggmap(test_map) + 
-#    coord_sf(crs = st_crs(3310))  # force the ggplot2 into 3310
-
-
-# actual map
-(ggmap(map3) + coord_sf(crs = st_crs(4326))+
-    geom_sf(data=hydro, aes(lty="Hydroregions"), color="black", fill=NA, size=0.25, inherit.aes = FALSE) +
-    scale_linetype_manual("", values = c("Hydroregions" = 2), 
-                          guide = guide_legend(override.aes = list(color = "white", alpha=0.5, lwd=0.5), order=3)) +
-    #geom_sf(data=rivs, lwd=0.1, color="darkblue", show.legend = FALSE, alpha=0.3) +
-    geom_sf(data=rivers_ca, lwd=0.2, color="turquoise4", show.legend = FALSE, alpha=0.45, inherit.aes = FALSE) + 
-    geom_sf(data=mainstems_gage_all, lwd=0.3, color="turquoise4", show.legend = FALSE, alpha=0.7, inherit.aes = FALSE) + 
-    #geom_sf(data=ca, fill = NA, color = 'slategray4', size = 0.7, alpha = 0.3, inherit.aes = FALSE) +
-    geom_sf(data=dams_final, aes(color="Dams"), fill="black", pch=25, size=3, alpha=0.8, inherit.aes = FALSE) +
-    scale_color_manual("", values=c("Dams"="black"), 
-                       guide = guide_legend(override.aes = list(alpha=1, lty=NA), order=2))+
-    geom_sf(data = data_k_dist %>% filter(k_5), aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
-    geom_sf(data = data_k_dist, aes(fill = k5_names, size=dist_to_centroid), pch=21, alpha=0.97, inherit.aes = FALSE) +
-    #geom_text_repel(data=hydro, aes(x=lon, y=lat, label=HR_NAME), size=3, point.padding = 0.7, min.segment.length = 5, segment.alpha = 0.5, force=8, segment.color = "gray20", show.legend = FALSE) +
-    # add north arrow and scale bar
-    annotation_north_arrow(location="tr", 
-                           pad_x = unit(1.5, "cm"), 
-                           pad_y = unit(0.5, "cm")) +
-    annotation_scale(location="br") +
-    scale_fill_manual("Thermal \nClasses", values=thermCols$color, guide=guide_legend(override.aes = list(size=4), order=1)) +
-    scale_size_area("Centroid Dist.", guide=guide_legend(order=2)) +
-    theme_map(base_family = "Roboto Condensed", base_size = 15) +
-    theme(legend.background = element_rect(fill = NA),
-          #plot.background = element_rect(color="black", size = 0.5),
-          legend.key = element_rect(fill = NA, color = NA, size=NA),
-          legend.position = c(0, 0.05), 
-          legend.spacing.y = unit(0.1,"cm"),
-          legend.margin = margin(0.1, 0, 0, 0.2, "cm"))
-)
-
-# save
-ggsave(filename="output/figures/Fig_4_classification_map_rivers_select_cent_dist_w_ggmap_terrain.pdf", dpi=300, width=8.5, height = 11, units="in", device=cairo_pdf)   
 
