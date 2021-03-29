@@ -48,6 +48,11 @@ load("output/13d_rivers_ca_streamorder_6.rda")
 load("output/12_selected_nhd_gage_mainstems.rda") # mainstems from gages
 mainstems_gage_all <- mainstems_gage_all %>% st_transform(crs_proj)
 
+# test:
+mapview(data_k_dist[data_k_dist$k_5==2, ],  zcol="site_name",
+        alpha.regions=0.8, cex=3.5,
+        hide=FALSE, homebutton=FALSE)
+
 # Panels ------------------------------------------------------------------
 
 
@@ -89,12 +94,12 @@ panel_areas <- panel_areas %>%
 rm(panel_areas_1)
 
 # preview
-# mapview(panel_areas, zcol="panel_name") + 
-#    mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
-#            layer.name="Thermal Classes",
-#            col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
-#            alpha.regions=0.8, cex=3.5,
-#            hide=FALSE, homebutton=FALSE)
+mapview(panel_areas, zcol="panel_name") +
+   mapview(data_k_dist,  zcol="k5_names", burst=TRUE, 
+           col.regions=data_k_dist$color[order(data_k_dist$k5_names)],
+           layer.name="Thermal Classes",
+           alpha.regions=0.8, cex=3.5,
+           hide=FALSE, homebutton=FALSE)
 
 # Tidy Data ---------------------------------------------------------------
 
