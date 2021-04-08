@@ -96,7 +96,7 @@ rm(panel_areas_1)
 # preview
 mapview(panel_areas, zcol="panel_name") +
    mapview(data_k_dist,  zcol="k5_names", burst=TRUE, 
-           col.regions=data_k_dist$color[order(data_k_dist$k5_names)],
+           col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]),
            layer.name="Thermal Classes",
            alpha.regions=0.8, cex=3.5,
            hide=FALSE, homebutton=FALSE)
