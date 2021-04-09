@@ -196,7 +196,7 @@ summary(ann_metrics_pca)
 
 # very comparable. SPCA is a bit more conservative, but explains most of the variation in the data.
 
-## PCA Plot: PC1 v PC2 -----------------------------------------------------
+## SPCA Plot: PC1 v PC2 -----------------------------------------------------
 
 # add PC coordinates and PLOT: PC1 vs P2
 ann_metrics_spca$scores %>% as.data.frame() %>% 
@@ -213,7 +213,7 @@ ann_metrics_spca$scores %>% as.data.frame() %>%
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
 
-## PCA Plot: PC2 v PC3 -----------------------------------------------------
+## SPCA Plot: PC2 v PC3 -----------------------------------------------------
 
 # add PC coordinates and PLOT: PC2 vs P3
 ann_metrics_spca$scores %>% as.data.frame() %>% 
@@ -230,7 +230,7 @@ ann_metrics_spca$scores %>% as.data.frame() %>%
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
 
-## PCA Plot: PC1 v PC3 -----------------------------------------------------
+## SPCA Plot: PC1 v PC3 -----------------------------------------------------
 
 # add PC coordinates and PLOT: PC1 vs P3
 ann_metrics_spca$scores %>% as.data.frame() %>% 
