@@ -162,7 +162,7 @@ ann_metrics_pca %>%
 
 ann_metrics_pca %>%
   # extract eigenvalues
-  tidy(matrix = "eigenvalues") #%>%
+  tidy(matrix = "eigenvalues") %>%
   ggplot(aes(PC, percent)) + 
   geom_col() + 
   scale_x_continuous(
@@ -174,9 +174,6 @@ ann_metrics_pca %>%
     # format y axis ticks as percent values
     label = scales::label_percent(accuracy = 1)
   )
-
-# 
-
 
 
 # Sparse PCA ------------------------------------------------
@@ -211,7 +208,7 @@ ann_metrics_spca$scores %>% as.data.frame() %>%
                      labels=thermCols$k5_names)+
   scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8),
                      labels=thermCols$k5_names)+
-  labs(title = "PCA of CA Thermal Regimes (k=5)",
+  labs(title = "SPCA of CA Thermal Regimes (k=5)",
        x="PC1", y="PC2") +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
@@ -228,7 +225,7 @@ ann_metrics_spca$scores %>% as.data.frame() %>%
                      labels=thermCols$k5_names)+
   scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8),
                      labels=thermCols$k5_names)+
-  labs(title = "PCA of CA Thermal Regimes (k=5)",
+  labs(title = "SPCA of CA Thermal Regimes (k=5)",
        x="PC2", y="PC3") +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
@@ -245,7 +242,7 @@ ann_metrics_spca$scores %>% as.data.frame() %>%
                      labels=thermCols$k5_names)+
   scale_shape_manual("Thermal \nClasses", values=c(15,16,17,18,8),
                      labels=thermCols$k5_names)+
-  labs(title = "PCA of CA Thermal Regimes (k=5)",
+  labs(title = "SPCA of CA Thermal Regimes (k=5)",
        x="PC1", y="PC3") +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
