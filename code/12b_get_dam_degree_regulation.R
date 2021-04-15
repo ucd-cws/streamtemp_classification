@@ -7,18 +7,14 @@
 # mapping
 library(sf)
 library(mapview)
-library(nhdplusTools)
 library(tidyverse)
 
 options(scipen=999)
 
 # 1. LOAD DATA ------------------------------------------------------------
 
-# clustering data and dams
-load("output/11a_agnes_k_5_final_w_centdist.rda") # data_k_sf_w_hydro_regions
-
-# dams
-load("output/11a_dams_nearest_final.rda")
+# dams with FID
+load("output/11a_dams_nearest_final.rda") # dams_nearest_all_final
 
 # fix duplicates
 dams_final <- dams_nearest_all_final %>% 
@@ -29,15 +25,24 @@ dams_final <- dams_nearest_all_final %>%
   mutate(lon = st_coordinates(.)[,1],
          lat = st_coordinates(.)[,2])
 
-rm(dams_nearest_all_final)
+rm(dams_nearest_all_final) # rm orig dataset
 
-# clean
-data_k_sf <- data_k_sf_w_hydro_regions
-data_k_sf <- st_set_crs(data_k_sf,4326)
+# get dam segment COMIDs
+dam_segs <- read_rds("output/12_selected_dam_comids.rds")
 
-# update/rename some cols
-data_k_sf <- data_k_sf %>% 
-  rename(cent_x = x, cent_y = y)
+# get data_k with dam names paired
+load("output/12_data_k_centdist_damdist.rda") # data_k_sf_hdyro_regions
+
+# get flowlines downstream of dam
+load("output/12_dams_final_mainstems_merged.rda") # ds_main_merged
+
+# Get Degree of Reg Data from Ted's 2014 paper
+dor_dat <- readxl::read_xlsx("data/grantham_2014_DOR_fInal_screen.xlsx", sheet=2)
+
+# get supp table info:
+all_sites <- read_csv("output/all_sites_metadata_model_results.csv")
+
+# Mapview Map -------------------------------------------------------------
 
 # setup some basemaps
 mapbases <- c("Stamen.TonerLite", 
@@ -48,13 +53,14 @@ mapviewOptions(basemaps=mapbases)
 
 # preview
 mapview(dams_final, col.regions="black", cex=8) +
-  mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
+  mapview(data_k_sf_w_hydro_regions,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
-          col.regions=unique(data_k_sf$color[order(data_k_sf$k5_names)]), 
+          col.regions=unique(data_k_sf_w_hydro_regions$color[order(data_k_sf_w_hydro_regions$k5_names)]), 
           alpha.regions=0.8, cex=3.5,
-          hide=FALSE, homebutton=FALSE)
+          hide=FALSE, homebutton=FALSE) +
+  mapview(ds_main_merged, lwd = "segs", layer.name="Streamline")
 
-# 2. SET UP MAPPING -------------------------------------------------------
+# SET UP MAPPING COLORS ----------------------------------------------
 
 # assign color palette based on classifications:
 thermCols <- data.frame(k5_group_id = c(1:5),
@@ -68,53 +74,104 @@ thermCols <- data.frame(k5_group_id = c(1:5),
                                     "#377EB8" #stable cold
                         )))
 
+# JOIN Data ---------------------------------------------------------------
 
-# GET FLOWLINES FROM DAMS ---------------------------------------------
+# join on NID
+dams_final_dor <- left_join(dams_final[,c(1:6,14:16)], dor_dat, by="NID") %>% 
+  mutate(NAME = coalesce(NAME.x, NAME.y)) %>% # see here for coalesce usage: https://alistaire.rbind.io/blog/coalescing-joins/
+  select(NAME, comid, NID:RIVER, DRAIN_SQKM:CDOR, lon, lat, -c("NAME.x", "NAME.y", "HEIGHT_FT"))
+  
+# save out
+write_rds(dams_final_dor, file="output/12b_dams_final_deg_of_reg.rds")
+write_csv(st_drop_geometry(dams_final_dor), file="output/12b_dams_final_deg_of_reg.csv")
 
-dam_segs <- read_rds("output/12_selected_dam_comids.rds")
-load("output/12_selected_nhd_dam_mainstems_us_ds.rda")
-load("output/12_selected_gages_w_dams.rda")
+# join with all sites 
+all_data_k_dor <- left_join(data_k_dist, 
+                            st_drop_geometry(dams_final_dor), by=c("dam_name"="NAME"))
+
+m1 <- mapview(all_data_k_dor, zcol="DOR")
+m2 <- mapview(all_data_k_dor, zcol="CDOR") + 
+  mapview(dams_final, col.regions="black", cex=8) +
+  mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
+          layer.name="Thermal Classes",
+          col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
+          alpha.regions=0.8, cex=3.5) +
+  mapview(ds_main_merged, lwd = "segs", layer.name="Streamline")
+
+
+m1+m2
+
+
+# EXPORT TABLES FOR MANUSCRIPT --------------------------------------------
+
+# split into 2 tables, one with just gage/thermal metadata and reg/unreg
+# one with dam DOR info and gage ID so tables can be cross referenced
+all_data_k_dor <- all_data_k_dor %>% st_drop_geometry() %>% 
+  # drop duplicated cols
+  mutate(reg_type = if_else(!is.na(dam_name),"REG", "UNREG")) %>% 
+  rename(lon=lon.x, lat=lat.x, station_comid = comid.x, dam_comid=comid.y,
+         dam_lon = lon.y, dam_lat = lat.y)
+
+write_rds(all_data_k_dor, file="output/12b_all_data_k_deg_reg.rds")  
+write_csv(all_data_k_dor, file="output/12b_all_data_k_deg_reg.csv")  
+
+names(all_data_k_dor)
+
+# split into two tables
+all_data_k_no_dor <- all_data_k_dor %>% 
+  select(station_id:station_comid, reg_type)
+
+dam_data_dor_only <- all_data_k_dor %>% 
+  filter(reg_type=="REG") %>% 
+  select(station_id:k5_names, site_name, dam_name, dam_comid:dam_lat)
+
+names(all_data_k_no_dor)
+names(dam_data_dor_only)
+
+# save out
+write_csv(all_data_k_no_dor, file="output/12b_all_data_k_no_dam_dor.csv")
+write_csv(dam_data_dor_only, file="output/12b_dam_data_k_dor_only.csv")
 
 # Get NHD Attribs ---------------------------------------------------------
-
-# get the COMID for each gage in list using nhdplustools
-usgs_segs <- dams_final %>% rowid_to_column() %>% 
-  split(.$rowid) %>% # split by ID
-  # then apply this function to each split to get COMID
-  map(~discover_nhdplus_id(.x$geometry))
-
-
-# now have a list of all COMIDs, check for duplicates
-usgs_segs %>% 
-  purrr::map_lgl(~ length(.x)>1) %>% table() # all FALSE
-
-# to see as a dataframe:
-dam_segs2 <- unlist(usgs_segs) %>% as_tibble(rownames = "rowid") %>% 
-  rename(comid = value) %>% 
-  # join back to original data
-  bind_cols(., dams_final)
-
-# download NHD attribs for every COMID that has a dam on it
-# subset_file <- tempfile(fileext = ".gpkg")
-# subset <- subset_nhdplus(comids = dams_segs$comid,
-#                          output_file = subset_file,
-#                          nhdplus_data = "download", 
-#                          flowline_only = FALSE,
-#                          return_data = TRUE)
-# dam_nhd_plus_data <- subset
-# save(dam_nhd_plus_data, file="output/dams_nhd_plus_data.rda")
-# rm(subset)
-# dam_nhd_plus_data$NHDFlowline_Network %>% View()
-
-# load the data
-load("output/dams_nhd_plus_data.rda")
-
-# look at drainage area and dam height, pull just NHD flowline network
-dams_nhd <- dam_nhd_plus_data$NHDFlowline_Network %>% st_transform(4326)
-
-# join attributes of stream segs with dams
-dams_joined <- left_join(dam_segs2, dams_nhd, by=c("comid")) 
-save(dams_joined, file = "output/12b_dam_nhd_comid_attributes.rda")
+# 
+# # get the COMID for each gage in list using nhdplustools
+# usgs_segs <- dams_final %>% rowid_to_column() %>% 
+#   split(.$rowid) %>% # split by ID
+#   # then apply this function to each split to get COMID
+#   map(~discover_nhdplus_id(.x$geometry))
+# 
+# 
+# # now have a list of all COMIDs, check for duplicates
+# usgs_segs %>% 
+#   purrr::map_lgl(~ length(.x)>1) %>% table() # all FALSE
+# 
+# # to see as a dataframe:
+# dam_segs2 <- unlist(usgs_segs) %>% as_tibble(rownames = "rowid") %>% 
+#   rename(comid = value) %>% 
+#   # join back to original data
+#   bind_cols(., dams_final)
+# 
+# # download NHD attribs for every COMID that has a dam on it
+# # subset_file <- tempfile(fileext = ".gpkg")
+# # subset <- subset_nhdplus(comids = dams_segs$comid,
+# #                          output_file = subset_file,
+# #                          nhdplus_data = "download", 
+# #                          flowline_only = FALSE,
+# #                          return_data = TRUE)
+# # dam_nhd_plus_data <- subset
+# # save(dam_nhd_plus_data, file="output/dams_nhd_plus_data.rda")
+# # rm(subset)
+# # dam_nhd_plus_data$NHDFlowline_Network %>% View()
+# 
+# # load the data
+# load("output/dams_nhd_plus_data.rda")
+# 
+# # look at drainage area and dam height, pull just NHD flowline network
+# dams_nhd <- dam_nhd_plus_data$NHDFlowline_Network %>% st_transform(4326)
+# 
+# # join attributes of stream segs with dams
+# dams_joined <- left_join(dam_segs2, dams_nhd, by=c("comid")) 
+# save(dams_joined, file = "output/12b_dam_nhd_comid_attributes.rda")
 
 # join attributes of lakes with dams
 #lakes_joined <- st_join(dams_final, st_transform(dam_nhd_plus_data$NHDWaterbody, 4326))
@@ -124,55 +181,4 @@ save(dams_joined, file = "output/12b_dam_nhd_comid_attributes.rda")
 
 # see attribute definitions: https://www.epa.gov/waterdata/learn-more#Documentation
 ## Alias: UpstreamCumulativeStreamKm (arbolatesu), qa_ma: mean annual flow? vc velocity, ve velocity adjust?
-dams_joined_sel <- dams_joined %>% 
-  select(comid, NAME:STO_10_6m3, gnis_id:lengthkm, arbolatesu, areasqkm:divdasqkm, starts_with("qa"), geometry.x) %>% 
-  mutate(across(.cols = c(HEIGHT_FT:STO_10_6m3), as.numeric))
 
-View(dams_joined_sel)
-
-# use qa_ma as approx mean annual flow (cfs) ? Or just add storage volume and total upstream km and drainage area? 
-dor <- dams_joined_sel %>% 
-  select(comid, NAME:RIVER, STO_m3, STO_10_6m3, arbolatesu, totdasqkm, qa_ma) %>% 
-  mutate(STO_10_6f3 = (STO_10_6m3 * 35.31),
-         deg_o_reg = qa_ma/STO_10_6f3,
-         us_km_by_sto = arbolatesu / STO_10_6m3)
-
-
-# Get Mean Annual Flow w FFC?------------------------------------------------
-
-# THIS WOULD NEED TO BE DONE FOR EACH AND IS A LOT OF EXTRA WORK
-# # or look here: https://rivers.codefornature.org/#/map
-# library(ffcAPIClient)
-# library(usethis)
-# ffctoken <- set_token(Sys.getenv("EFLOWS", ""))
-# ffcAPIClient::clean_account(ffctoken)
-# 
-# load(file="output/dams_nhd_plus_data.rda")
-# 
-# ffc <- FFCProcessor$new()  # make a new object 
-# ffc$set_up(comid = dam_segs$comid[1], token = ffctoken)
-# 
-# # then run
-# ffc$run()
-# 
-# # then pull metrics
-# ffc$alteration
-# ffc$doh_data
-# ffc$ffc_percentiles
-# ffc$ffc_results
-# ffc$predicted_percentiles
-# ffc$predicted_wyt_percentiles
-# 
-# # steps
-# ffc$step_one_functional_flow_results(comid = 2764502, gage_id = 11376025, token = ffctoken, output_folder = "output/ffc")
-# 
-# # calc mean annual flow?
-# ffc$timeseries %>% group_by(waterYear) %>% 
-#   summarize(meanFlow = mean(flow, na.rm=TRUE)) %>%
-#   ungroup() %>% 
-#   summarize(meanAnnFlow = mean(meanFlow),
-#             meanAnnVol_af = meanAnnFlow * 31557600 * 0.000022956840904921) # s in a year
-
-# do calc for DOR: storage volume / mean annual flow vol in acre feet here:
-#425/15751 # for macumber
-  
