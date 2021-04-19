@@ -89,17 +89,17 @@ write_csv(st_drop_geometry(dams_final_dor), file="output/12b_dams_final_deg_of_r
 all_data_k_dor <- left_join(data_k_dist, 
                             st_drop_geometry(dams_final_dor), by=c("dam_name"="NAME"))
 
-m1 <- mapview(all_data_k_dor, zcol="DOR")
-m2 <- mapview(all_data_k_dor, zcol="CDOR") + 
-  mapview(dams_final, col.regions="black", cex=8) +
-  mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
-          layer.name="Thermal Classes",
-          col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
-          alpha.regions=0.8, cex=3.5) +
-  mapview(ds_main_merged, lwd = "segs", layer.name="Streamline")
-
-
-m1+m2
+# m1 <- mapview(all_data_k_dor, zcol="DOR")
+# m2 <- mapview(all_data_k_dor, zcol="CDOR") + 
+#   mapview(dams_final, col.regions="black", cex=8) +
+#   mapview(data_k_dist,  zcol="k5_names", map.types=mapbases,
+#           layer.name="Thermal Classes",
+#           col.regions=unique(data_k_dist$color[order(data_k_dist$k5_names)]), 
+#           alpha.regions=0.8, cex=3.5) +
+#   mapview(ds_main_merged, lwd = "segs", layer.name="Streamline")
+# 
+# 
+# m1+m2
 
 
 # EXPORT TABLES FOR MANUSCRIPT --------------------------------------------
@@ -111,6 +111,11 @@ all_data_k_dor <- all_data_k_dor %>% st_drop_geometry() %>%
   mutate(reg_type = if_else(!is.na(dam_name),"REG", "UNREG")) %>% 
   rename(lon=lon.x, lat=lat.x, station_comid = comid.x, dam_comid=comid.y,
          dam_lon = lon.y, dam_lat = lat.y)
+
+all_data_k_dor <- all_data_k_dor %>% 
+  mutate(reg_type = case_when(
+    station_id == "PC_mouth" ~ "UNREG",
+    TRUE ~ reg_type))
 
 write_rds(all_data_k_dor, file="output/12b_all_data_k_deg_reg.rds")  
 write_csv(all_data_k_dor, file="output/12b_all_data_k_deg_reg.csv")  
