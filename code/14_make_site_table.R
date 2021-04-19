@@ -27,6 +27,8 @@ load("data/all_gages.rda")
 cdec_metadata <- read_csv("data/cdec_stations_metadata_filt8yr.csv")
 load("data/cdec_stations_completed.rda")
 
+#Need to add Shasta sites
+
 # Filter data to build Table 1 --------------------------------------------
 
 #drop geometry from data_k_sf dataframe
@@ -73,3 +75,12 @@ all_sites_final <- rbind(all_data_usgs, all_data_cdec)
 
 #SAVE!!!
 write_csv(all_sites_final, "output/all_sites_metadata_model_results.csv")
+
+
+# Skip to here ------------------------------------------------------------
+
+TableS1 <- read_csv("output/all_sites_metadata_model_results.csv")
+
+sites_reg_unreg <- read_csv("output/12b_all_data_k_no_dam_dor.csv")
+
+reg_sites_dor <- read_csv("output/12b_dam_data_k_dor_only.csv")
