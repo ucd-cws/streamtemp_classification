@@ -57,18 +57,7 @@ cdec_all_data <- left_join(station_list,cdec_metadata_filtered, by = "site_id")
 cdec_all_data <- cdec_all_data %>% 
   rename(station_id = site_id)
 
-#convert class type in cdec_info so that date_begin and date_end match all_data_usgs_range
-
-# cdec_all_data$date_begin <- as.character(cdec_all_data$date_begin)
-# cdec_all_data$date_end <- as.character(cdec_all_data$date_end)
-# cdec_all_data <- cdec_all_data %>% 
-#   rename(station_id = site_id)
-
 all_data_usgs_cdec_range <- left_join(all_data_usgs_range, cdec_all_data, by = "station_id")
-
-# Add Shasta sites - start coding from here. Need to make a separate dataframe, then rbind it to the existing one.
-
-
 
 #clean columns
 
@@ -84,16 +73,75 @@ all_data_cdec <- all_data_usgs_cdec_range %>%
   rename(date_end = date_end.y) %>% 
   select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
 
-all_sites_final <- rbind(all_data_usgs, all_data_cdec)
+all_data_other <- all_data_usgs_cdec_range %>% 
+  filter(operator == "CDFW"|operator == "TNC"|operator == "UCD") %>%
+  rename(date_begin = date_begin.x) %>% 
+  rename(date_end = date_end.x) %>% 
+  select(station_id, site_name, lon, lat, HR_NAME, operator, data_source, date_begin, date_end,  k5_names, ann_mean, ann_max, DOWY)
+
+all_sites_final <- rbind(all_data_usgs, all_data_cdec, all_data_other)
+
+#remove duplicates based on station_id columns
+all_sites_final <- all_sites_final[!duplicated(all_sites_final$station_id),]
+
+#add metadata to 6 sites: BSC_*, PC_mouth, SR_*
+all_sites_final[all_sites_final$station_id=="BSC_dam", 7:9] <- c("UCD", "2008-07-30","2019-09-30")
+
+all_sites_final[all_sites_final$station_id=="BSC_mouth", 7:9] <- c("UCD", "2008-03-11","2019-09-30")
+
+all_sites_final[all_sites_final$station_id=="BSC_spring", 7:9] <- c("UCD", "2008-03-10","2017-05-23")
+
+all_sites_final[all_sites_final$station_id=="PC_mouth", 7:9] <- c("UCD", "2008-04-25","2019-09-30")
+
+all_sites_final[all_sites_final$station_id=="SR_abv_BSC", 7:9] <- c("UCD", "2008-08-13","2019-09-30")
+
+all_sites_final[all_sites_final$station_id=="SR_abv_Parks", 7:9] <- c("UCD", "2008-03-26","2019-09-30")
 
 #SAVE!!!
+
 write_csv(all_sites_final, "output/all_sites_metadata_model_results.csv")
 
+# Table S1: Reg/Unreg --------------------------------------------------------
 
-# Skip to here ------------------------------------------------------------
-
-TableS1 <- read_csv("output/all_sites_metadata_model_results.csv")
-
+#Import data from Ryan with reg/unregulated labels and degree of regulation
 sites_reg_unreg <- read_csv("output/12b_all_data_k_no_dam_dor.csv")
 
+#filter data frame for only necessary columns
+sites_reg_unreg_filtered <- sites_reg_unreg %>% 
+  select(station_id, dist_to_centroid, reg_type)
+
+#join with all sites dataframe to make S1 Table
+
+S1_Table <- full_join(all_sites_final, sites_reg_unreg_filtered, by = "station_id")
+
+# SAVE!!!
+write_csv(S1_Table, "output/TableS1.csv")
+
+
+# Table S2: degree of regulation ------------------------------------------
+
+#degree of regulation
 reg_sites_dor <- read_csv("output/12b_dam_data_k_dor_only.csv")
+
+#distance from dam
+load("output/12_data_k_centdist_damdist.rda") #object name: data_k_dist
+
+#drop geometry
+data_k_dist_no_sf <- st_drop_geometry(data_k_dist)
+
+#filter for only necessary columns
+
+reg_sites_dor_filtered <- reg_sites_dor %>% 
+  select(station_id, site_name, k5_names, RIVER, DRAIN_SQKM, runoff_m3, dam_name, dam_lon, dam_lat, STO_m3, CUMSTO_m3, DOR, CDOR)
+
+dist_to_dam <- data_k_dist_no_sf %>% 
+  select(station_id, HR_NAME, cum_len_km)
+
+dor_and_dist_to_dam <- left_join(reg_sites_dor_filtered,dist_to_dam, by = "station_id")
+
+S2_Table <- dor_and_dist_to_dam %>% 
+  select(station_id, site_name, k5_names, HR_NAME, RIVER, DRAIN_SQKM, runoff_m3, cum_len_km, dam_name, dam_lon, dam_lat, STO_m3, CUMSTO_m3, DOR, CDOR) %>% 
+  rename(dist_blw_dam_km = cum_len_km)
+
+#  SAVE!!!
+write_csv(S2_Table, "output/TableS2.csv")
