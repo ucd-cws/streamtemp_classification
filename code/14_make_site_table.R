@@ -10,7 +10,7 @@
 
 library(tidyverse)
 library(sf)
-
+library(lubridate)
 
 # Load data ---------------------------------------------------------------
 
@@ -25,14 +25,14 @@ load("data/all_gages.rda")
 
 #This has date year range for CDEC stations, for all observations:
 cdec_metadata <- read_csv("data/cdec_stations_metadata_filt8yr.csv")
-load("data/cdec_stations_completed.rda")
 
-#Need to add Shasta sites
+load("data/cdec_stations_completed.rda") #this load as the station_list dataframe
+
 
 # Filter data to build Table 1 --------------------------------------------
 
 #drop geometry from data_k_sf dataframe
-data_k_no_sf <- st_set_geometry(data_k_sf_w_hydro_regions, NULL)
+data_k_no_sf <- st_drop_geometry(data_k_sf_w_hydro_regions)
 
 all_gages_no_sf <- all_gages %>% 
   rename(station_id = site_id) %>% 
@@ -42,20 +42,33 @@ all_data_no_range <- left_join(data_k_no_sf,ann_metrics)
 
 all_data_usgs_range <- left_join(all_data_no_range,all_gages_no_sf)
 
+#convert class type for date_begin and date_end so that the dates will read consistently with cdec
+
+all_data_usgs_range$date_begin <- mdy(all_data_usgs_range$date_begin)
+
+all_data_usgs_range$date_end <- mdy(all_data_usgs_range$date_end)
+
 #wrangle cdec data to get sites with no duplicates
-cdec_metadata <- cdec_metadata %>%
-  select(site_id, interval_id, date_begin, date_end) %>% 
-  rename(interval = interval_id)
+cdec_metadata_filtered <- cdec_metadata %>%
+  select(site_id, interval, date_begin, date_end) 
 
-cdec_all_data <- left_join(station_list,cdec_metadata)
+cdec_all_data <- left_join(station_list,cdec_metadata_filtered, by = "site_id")
 
-#convert class type in cdec_info so that date_begin and date_end match all_data_usgs_range
-cdec_all_data$date_begin <- as.character(cdec_all_data$date_begin)
-cdec_all_data$date_end <- as.character(cdec_all_data$date_end)
 cdec_all_data <- cdec_all_data %>% 
   rename(station_id = site_id)
 
+#convert class type in cdec_info so that date_begin and date_end match all_data_usgs_range
+
+# cdec_all_data$date_begin <- as.character(cdec_all_data$date_begin)
+# cdec_all_data$date_end <- as.character(cdec_all_data$date_end)
+# cdec_all_data <- cdec_all_data %>% 
+#   rename(station_id = site_id)
+
 all_data_usgs_cdec_range <- left_join(all_data_usgs_range, cdec_all_data, by = "station_id")
+
+# Add Shasta sites - start coding from here. Need to make a separate dataframe, then rbind it to the existing one.
+
+
 
 #clean columns
 
