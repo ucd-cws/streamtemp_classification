@@ -20,7 +20,7 @@ all_sites_model_data %>% distinct(station_id) %>% nrow() # 77 sites
 
 # step 1: fit model to observed data
 thermal_regime_model <- function(obs_data){
-  fitModel(mean_temp_C~a + b*sin(2*pi/365*(DOWY+c)), data = obs_data)
+  fitModel(DailyMean~a + b*sin(2*pi/365*(DOWY+c)), data = obs_data)
 }
 
 # need coefficients from step 1 to go in step 2:
