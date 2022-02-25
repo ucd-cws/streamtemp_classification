@@ -74,6 +74,7 @@ load("output/models/09b_annual_cluster_metrics_all_gages.rda")
 # join with the groups
 ann_metrics_k <- left_join(ann_metrics, classification_group_results) %>% 
   mutate(k_5 = as.factor(k_5)) 
+
   
 # add colors
 thermCols <- with(ann_metrics_k, 

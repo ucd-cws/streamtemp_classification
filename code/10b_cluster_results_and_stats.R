@@ -29,6 +29,13 @@ ann_metrics_s <- ann_metrics %>%
   dplyr::mutate_at(vars(ann_mean:DOWY), .funs = scale) %>%
   tibble::column_to_rownames(var = "station_id")
 
+# if we remove the CLP site which is in a tailrace:
+ann_metrics_s <- ann_metrics %>% 
+  filter(station_id != "CLP") %>% 
+  select(station_id, ann_mean, ann_amp, DOWY) %>% # select only metrics to model
+  dplyr::mutate_at(vars(ann_mean:DOWY), .funs = scale) %>%
+  tibble::column_to_rownames(var = "station_id")
+
 # create Euclidean dissimilarity/distance matrix
 d1 <- dist(ann_metrics_s, method = "euclidean")
 
@@ -85,7 +92,7 @@ ggclust2_k5 + theme_classic() +
   guides(fill = guide_legend(
     override.aes = aes(label = "")))
 
-ggsave(filename = "output/figures/pc_agnes_k5_no_labels.png", width = 11, height = 8, units = "in", dpi=600, )
+ggsave(filename = "output/figures/pc_agnes_k5_no_labels_without_CLP.png", width = 11, height = 8, units = "in", dpi=600, )
 
 # HCLUST: Stats  -----------------------------------------------------------
 
