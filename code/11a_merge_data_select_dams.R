@@ -114,7 +114,7 @@ rm(sites, all_sites, cboot5_df, agnes_k_groups, data_k)
 # FILTER TO CA DAMS --------------------------------------------------------------------
 
 # clip to only dams in CA
-ca <- USAboundaries::us_boundaries(type="state", states="ca")
+ca <- USAboundaries::us_states(states="ca")
 dams <- dams[ca,] # now clip (spatial join to only ca)
 
 # get nearest dams
@@ -129,11 +129,16 @@ save(dams, dams_nearest_filtered, file = "output/11a_ca_dams_nearest_k_sites.rda
 
 
 # map k5
+mapbases <- c("Stamen.TonerLite","OpenTopoMap", "CartoDB.PositronNoLabels", "OpenStreetMap",
+              "Esri.WorldImagery", "Esri.WorldTopoMap","Esri.WorldGrayCanvas"
+)
+mapviewOptions(basemaps=mapbases, fgb = FALSE)
+
 m5 <- mapview(dams_nearest_filtered, col.regions="black",
                 layer.name="Selected Dams", cex=6,
                 hide=TRUE, homebutton=FALSE)+
   mapview(dams, col.regions="gray50", alpha.regions=0.5, cex=3.4, layer.name="All Dams") +
-  mapview(mainstems_all, color="steelblue", cex=3, 
+  mapview(mainstems_gage_all, color="steelblue", cex=3, 
           layer.name="NHD Flowlines") +
   mapview(data_k_sf,  zcol="k5_names", map.types=mapbases,
           layer.name="Thermal Classes",
