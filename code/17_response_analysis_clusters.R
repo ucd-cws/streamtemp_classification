@@ -49,6 +49,8 @@ mapview(dat, zcol="k5_names")
 # adj points
 dat_elev <- elevatr::get_elev_point(dat)
 
+write_csv(dat_elev, "output/all_site_descriptors.csv")
+
 hist(dat_elev$elevation, breaks = 125, col="cyan4", main="Elevation for Sites", xlab="Elevation (meters)")
 
 # PCA OF DATA -------------------------------------------------------------
