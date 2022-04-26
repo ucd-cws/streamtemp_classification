@@ -72,6 +72,19 @@ rect.hclust(hc, k = 5, border = viridis::viridis(5))
 hc_grps_k5 <- cutree(hc, k=5) # try k=5
 table(hc_grps_k5)
 
+
+ann_metrics %>% 
+  # select only metrics to model
+  select(station_id, ann_mean, ann_amp, DOWY) %>% 
+  # add others: 
+  #select(station_id, ann_mean, ann_amp, water_day, elevation, DOR, CDOR) %>% 
+  select(where(is.numeric)) %>% # get only numeric and scale
+  scale() %>% 
+  prcomp() %>% 
+  #fviz_eig()
+  fviz_pca()
+
+
 # plot without labels
 ggclust2_k5 <- fviz_cluster(list(data=d1, cluster=hc_grps_k5), geom="point", xlab = "PC 1 (59.8%)", ylab = "PC 2 (28.8%)")
 

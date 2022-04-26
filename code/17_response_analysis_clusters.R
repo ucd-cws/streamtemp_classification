@@ -88,12 +88,28 @@ summary(dat_out)
 # then scale data (mean of zero, sd =1)
 ann_pca <- dat_out %>% 
   # select only metrics to model
+  #select(station_id, ann_mean, ann_amp, water_day) %>% 
+  # add others: 
   select(station_id, ann_mean, ann_amp, water_day, elevation, DOR, CDOR) %>% 
   select(where(is.numeric)) %>% # get only numeric and scale
   scale() %>% 
   prcomp()
 
-ann_pca
+# look at percent explained:
+ann_pca %>%
+  # extract eigenvalues
+  tidy(matrix = "eigenvalues")
+
+# scree plot
+fviz_eig(ann_pca, addlabels = TRUE)
+
+# pca plot
+fviz_pca(ann_pca)
+
+# get var contributing
+var <- get_pca_var(ann_pca)
+head(var$contrib, 8)
+
 
 ## from claus wilke's slides (SD375)
 # for rotational matrix
@@ -126,7 +142,7 @@ ann_pca_rot <- ann_pca %>%
                       labels=thermCols$k5_names)+
    labs(title = "PCA of CA Thermal Regimes (k=5)",
         caption="This includes variables DOR, CDOR, elev & 3 temp metrics",
-        x="PC1", y="PC2") +
+        x=glue::glue("PC1 ({round(((ann_pca$sdev[1]^2) / (sum(ann_pca$sdev^2))*100),1)}%)"), y=glue::glue("PC2 ({round(((ann_pca$sdev[2]^2) / (sum(ann_pca$sdev^2))*100),1)}%)")) +
    guides(fill = guide_legend(
      override.aes = aes(label = ""))))
 
@@ -216,21 +232,22 @@ ann_pca %>%
 
 fviz_pca_var(ann_pca) +
   theme(plot.background = element_rect(fill="white"))
-ggsave(filename = "output/figures/pca_ann_metrics_w_dor_elev_rotation_matrix.png", width = 9, height = 7, units = "in", dpi=300)
-# ann_pca %>%
-#   # extract eigenvalues
-#   tidy(matrix = "eigenvalues") %>%
-#   ggplot(aes(PC, percent)) + 
-#   geom_col() + 
-#   scale_x_continuous(
-#     # create one axis tick per PC
-#     breaks = 1:6
-#   ) +
-#   scale_y_continuous(
-#     name = "variance explained per PC",
-#     # format y axis ticks as percent values
-#     label = scales::label_percent(accuracy = 1)
-#   )
+
+#ggsave(filename = "output/figures/pca_ann_metrics_w_dor_elev_rotation_matrix.png", width = 9, height = 7, units = "in", dpi=300)
+ann_pca %>%
+  # extract eigenvalues
+  tidy(matrix = "eigenvalues") %>%
+  ggplot(aes(PC, percent)) +
+  geom_col() +
+  scale_x_continuous(
+    # create one axis tick per PC
+    breaks = 1:6
+  ) +
+  scale_y_continuous(
+    name = "variance explained per PC",
+    # format y axis ticks as percent values
+    label = scales::label_percent(accuracy = 1)
+  )
 
 
 
