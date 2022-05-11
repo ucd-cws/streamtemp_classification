@@ -235,7 +235,10 @@ ann_pca %>%
 fviz_pca_var(ann_pca) +
   theme(plot.background = element_rect(fill="white"))
 
-#ggsave(filename = "output/figures/pca_ann_metrics_w_dor_elev_rotation_matrix.png", width = 9, height = 7, units = "in", dpi=300)
+ggsave(filename = "output/figures/pca_ann_metrics_w_dor_elev_rotation_matrix.png", width = 10, height = 8, units = "in", dpi=600, bg="white")
+
+ggsave(filename = "output/figures/pca_ann_metrics_w_dor_elev_rotation_matrix.pdf", width = 10, height = 8, dpi=600)
+
 ann_pca %>%
   # extract eigenvalues
   tidy(matrix = "eigenvalues") %>%
