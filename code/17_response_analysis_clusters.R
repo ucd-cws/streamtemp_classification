@@ -106,6 +106,8 @@ fviz_eig(ann_pca, addlabels = TRUE)
 # pca plot
 fviz_pca(ann_pca)
 
+ggsave(filename = "output/figures/2022_scaled_pca_response_to_comment.png", width = 8, height = 10, dpi = 600, bg = "white")
+ggsave(filename = "output/figures/2022_scaled_pca_response_to_comment.pdf", width = 8, height = 10)
 # get var contributing
 var <- get_pca_var(ann_pca)
 head(var$contrib, 8)
